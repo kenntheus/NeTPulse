@@ -1,14 +1,15 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use App\Services\MonitoringService;
 use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
-
+/**
+ * Ping all devices every 30 seconds.
+ * withoutOverlapping() ensures the job won't run if a previous check is still in progress.
+ */
 Schedule::call(function () {
     app(MonitoringService::class)->checkAll();
-})->everyThirtySeconds()->name('monitor-devices')->withoutOverlapping();
+})
+->everyThirtySeconds()
+->name('monitor-all-devices')
+->withoutOverlapping();

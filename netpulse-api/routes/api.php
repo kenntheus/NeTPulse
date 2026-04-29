@@ -1,41 +1,45 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AlertController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\MonitoringLogController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\AlertController;
+use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// ── Public ────────────────────────────────────────────────────────────────────
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login',    [AuthController::class, 'login']);
+});
 
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login',    [AuthController::class, 'login']);
-
+// ── Protected ─────────────────────────────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
 
     // Auth
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::get('/auth/me',      [AuthController::class, 'me']);
+    Route::prefix('auth')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/me',      [AuthController::class, 'me']);
+    });
 
-    // Devices (admin: full CRUD | viewer: read-only via policy)
+    // Dashboard stats
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/summary',       [DashboardController::class, 'summary']);
+        Route::get('/latency-chart', [DashboardController::class, 'latencyChart']);
+        Route::get('/uptime-chart',  [DashboardController::class, 'uptimeChart']);
+    });
+
+    // Devices
     Route::apiResource('devices', DeviceController::class);
     Route::post('/devices/{device}/ping', [DeviceController::class, 'ping']);
 
-    // Monitoring logs
-    Route::get('/devices/{device}/logs',  [MonitoringLogController::class, 'index']);
-    Route::get('/logs/export',            [MonitoringLogController::class, 'export']); // CSV
-
-    // Dashboard stats
-    Route::get('/dashboard/summary',      [DashboardController::class, 'summary']);
-    Route::get('/dashboard/latency-chart',[DashboardController::class, 'latencyChart']);
-    Route::get('/dashboard/uptime-chart', [DashboardController::class, 'uptimeChart']);
+    // Logs
+    Route::get('/devices/{device}/logs', [MonitoringLogController::class, 'index']);
+    Route::get('/logs/export',           [MonitoringLogController::class, 'export']);
 
     // Alerts
-    Route::get('/alerts',                 [AlertController::class, 'index']);
-    Route::patch('/alerts/{alert}/read',  [AlertController::class, 'markRead']);
-    Route::delete('/alerts/{alert}',      [AlertController::class, 'destroy']);
+    Route::get('/alerts',                    [AlertController::class, 'index']);
+    Route::patch('/alerts/{alert}/read',     [AlertController::class, 'markRead']);
+    Route::post('/alerts/read-all',          [AlertController::class, 'markAllRead']);
+    Route::delete('/alerts/{alert}',         [AlertController::class, 'destroy']);
 });
