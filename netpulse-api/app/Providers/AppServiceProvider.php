@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Device;
+use App\Policies\DevicePolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +22,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register the Device policy for role-based access control.
+        // Admin  → full CRUD on devices
+        // Viewer → read-only
+        Gate::policy(Device::class, DevicePolicy::class);
     }
 }

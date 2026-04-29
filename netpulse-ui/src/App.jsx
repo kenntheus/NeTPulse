@@ -5,8 +5,8 @@ import Login     from './pages/Login'
 import Register  from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Devices   from './pages/Devices'
-import Logs      from './pages/Logs'
-import Alerts    from './pages/Alerts'
+//import Logs      from './pages/Logs'
+//import Alerts    from './pages/Alerts'
 
 // Redirect to login if not authenticated
 function ProtectedRoute({ children }) {

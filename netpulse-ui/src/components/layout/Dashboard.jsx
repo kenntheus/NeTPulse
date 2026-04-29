@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import api from '../lib/api'
 import { useEcho } from '../hooks/useEcho'
-import { StatusDot, Badge, Spinner } from '../components/ui'
+//import { StatusDot, Badge, Spinner } from '../components/ui'
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
-import Sidebar from './Sidebar'
 import api from '../../lib/api'
 
 export default function AppLayout() {
