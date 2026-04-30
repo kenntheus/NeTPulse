@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
 import { useAuth } from '../store/AuthContext'
-import { Button, Modal, Badge, StatusDot, EmptyState, Spinner } from '../components/ui'
+//import { Button, Modal, Badge, StatusDot, EmptyState, Spinner } from '../components/ui'
 
 const DEVICE_TYPES = ['router', 'switch', 'server', 'firewall', 'ap', 'other']
 const TYPE_ICON    = { router: '⬡', switch: '⬢', server: '▣', firewall: '⬛', ap: '◎', other: '◈' }

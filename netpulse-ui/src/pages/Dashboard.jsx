@@ -17,7 +17,7 @@ function StatCard({ label, value, color, icon }) {
     gray:  'from-gray-50 to-gray-50/30 border-gray-200 text-gray-600 dark:from-gray-800/40 dark:to-transparent dark:border-gray-700 dark:text-gray-400',
   }
   return (
-    <div className={`bg-gradient-to-br rounded-xl border p-5 ${colors[color]}`}>
+    <div className={`bg-linear-to-br rounded-xl border p-5 ${colors[color]}`}>
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-medium opacity-70 uppercase tracking-wider">{label}</p>
         <span className="text-xl">{icon}</span>
