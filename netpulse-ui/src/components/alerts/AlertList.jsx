@@ -1,0 +1,104 @@
+import { Badge, Button, EmptyState } from '../ui'
+
+const TYPE_CONFIG = {
+  offline:      { badge: 'offline',  icon: '🔴', label: 'Offline'       },
+  recovered:    { badge: 'success',  icon: '🟢', label: 'Recovered'     },
+  high_latency: { badge: 'warning',  icon: '⚠️', label: 'High Latency'  },
+}
+
+/**
+ * AlertList — renders a list of alert objects.
+ *
+ * Props:
+ *   alerts      Alert[]   array of alert objects
+ *   onMarkRead  fn(alert) called when user clicks "mark read"
+ *   onDelete    fn(id)    called when user clicks delete
+ *   compact     bool      smaller padding, no device name (for widgets)
+ */
+export default function AlertList({ alerts = [], onMarkRead, onDelete, compact = false }) {
+  if (!alerts.length) {
+    return (
+      <EmptyState
+        icon="🔔"
+        title="No alerts"
+        description="All clear — no device alerts to display."
+      />
+    )
+  }
+
+  return (
+    <ul className="space-y-2">
+      {alerts.map((alert) => {
+        const cfg = TYPE_CONFIG[alert.type] ?? TYPE_CONFIG.offline
+
+        return (
+          <li
+            key={alert.id}
+            className={[
+              'flex items-start gap-3 rounded-xl border transition-all',
+              compact ? 'px-4 py-3' : 'px-5 py-4',
+              !alert.is_read
+                ? 'border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-900/10'
+                : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 opacity-60',
+            ].join(' ')}
+          >
+            {/* Icon */}
+            <span className="text-lg flex-shrink-0 mt-0.5" role="img" aria-label={cfg.label}>
+              {cfg.icon}
+            </span>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                <Badge variant={cfg.badge}>{cfg.label}</Badge>
+
+                {/* Unread dot */}
+                {!alert.is_read && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                )}
+
+                {/* Device name — shown when not compact */}
+                {!compact && alert.device && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">
+                    {alert.device.name}
+                    <span className="font-mono text-gray-400 ml-1">({alert.device.ip_address})</span>
+                  </span>
+                )}
+              </div>
+
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-snug">
+                {alert.message}
+              </p>
+
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                {new Date(alert.created_at).toLocaleString()}
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {!alert.is_read && onMarkRead && (
+                <button
+                  onClick={() => onMarkRead(alert)}
+                  title="Mark as read"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 transition-all text-sm"
+                >
+                  ✓
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={() => onDelete(alert.id)}
+                  title="Delete alert"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all text-base leading-none"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}

@@ -1,28 +1,17 @@
-import { useState, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
-import api from '../../lib/api'
+import Sidebar from './Sidebar'
+import TopBar  from './TopBar'
 
 export default function AppLayout() {
-  const [unreadAlerts, setUnreadAlerts] = useState(0)
-
-  useEffect(() => {
-    const fetchAlertCount = async () => {
-      try {
-        const { data } = await api.get('/dashboard/summary')
-        setUnreadAlerts(data.unread_alerts ?? 0)
-      } catch (_) {}
-    }
-    fetchAlertCount()
-    const id = setInterval(fetchAlertCount, 30_000)
-    return () => clearInterval(id)
-  }, [])
-
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar alertCount={unreadAlerts} />
-      <main className="flex-1 overflow-auto">
-        <Outlet />
-      </main>
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
+      <Sidebar />
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <TopBar />
+        <main className="flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }

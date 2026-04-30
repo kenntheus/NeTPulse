@@ -7,9 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -18,23 +16,23 @@ class AuthController extends Controller
      */
     public function register(Request $request): JsonResponse
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'name'     => ['required', 'string', 'max:100'],
-            'email'    => ['required', 'email', 'unique:users,email'],
+            'email'    => ['required', 'email', 'max:150', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'password' => Hash::make($data['password']),
-            'role'     => 'viewer', // default role
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role'     => 'viewer',
         ]);
 
-        $token = $user->createToken('netpulse')->plainTextToken;
+        $token = $user->createToken('netpulse-token')->plainTextToken;
 
         return response()->json([
-            'user'  => $this->userResource($user),
+            'user'  => $this->formatUser($user),
             'token' => $token,
         ], 201);
     }
@@ -44,22 +42,22 @@ class AuthController extends Controller
      */
     public function login(Request $request): JsonResponse
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'email'    => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::attempt($data)) {
+        if (!Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']])) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'email' => ['The email or password is incorrect.'],
             ]);
         }
 
         $user  = Auth::user();
-        $token = $user->createToken('netpulse')->plainTextToken;
+        $token = $user->createToken('netpulse-token')->plainTextToken;
 
         return response()->json([
-            'user'  => $this->userResource($user),
+            'user'  => $this->formatUser($user),
             'token' => $token,
         ]);
     }
@@ -79,12 +77,10 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['user' => $this->userResource($request->user())]);
+        return response()->json(['user' => $this->formatUser($request->user())]);
     }
 
-    // ── Private ───────────────────────────────────────────────────────────
-
-    private function userResource(User $user): array
+    private function formatUser(User $user): array
     {
         return [
             'id'         => $user->id,

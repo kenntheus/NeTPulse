@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../store/AuthContext'
-//import { Button } from '../components/ui'
+import Button from '../components/ui/Button'
+import Spinner from '../components/ui/Spinner'
 
 export default function Login() {
   const { login, loading } = useAuth()
   const navigate           = useNavigate()
-  const [form,    setForm]  = useState({ email: '', password: '' })
-  const [error,   setError] = useState('')
+  const [form,  setForm]   = useState({ email: '', password: '' })
+  const [error, setError]  = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -23,7 +24,9 @@ export default function Login() {
 
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8 justify-center">
-          <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">N</div>
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+            N
+          </div>
           <div>
             <h1 className="text-white font-bold text-xl leading-none">NetPulse</h1>
             <p className="text-gray-500 text-xs">Network Monitoring</p>
@@ -50,7 +53,7 @@ export default function Login() {
                 onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                 placeholder="admin@netpulse.dev"
                 required
-                className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
             <div>
@@ -61,14 +64,21 @@ export default function Login() {
                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                 placeholder="••••••••"
                 required
-                className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
-            <Button type="submit" loading={loading} className="w-full justify-center">
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg px-4 py-2.5 text-sm transition-all"
+            >
+              {loading && <Spinner size="sm" />}
               Sign in
-            </Button>
+            </button>
           </form>
 
+          {/* Demo credentials */}
           <div className="mt-4 p-3 bg-gray-800/50 rounded-lg text-xs text-gray-500">
             <p className="font-medium text-gray-400 mb-1">Demo accounts</p>
             <p>Admin: admin@netpulse.dev / password</p>
@@ -78,7 +88,7 @@ export default function Login() {
 
         <p className="text-center text-sm text-gray-600 mt-4">
           Don't have an account?{' '}
-          <Link to="/register" className="text-brand-400 hover:text-brand-300 transition-colors">
+          <Link to="/register" className="text-blue-400 hover:text-blue-300 transition-colors">
             Register
           </Link>
         </p>
