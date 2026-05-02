@@ -2,114 +2,174 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\Alert;
 use App\Models\Device;
 use App\Models\MonitoringLog;
-use App\Models\Alert;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // ─── Admin user ───────────────────────────────────────────────────
-        $admin = User::create([
-            'name'     => 'Admin User',
-            'email'    => 'admin@netpulse.dev',
-            'password' => Hash::make('password'),
-            'role'     => 'admin',
-        ]);
+        // ── Users ─────────────────────────────────────────────────────────
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@netpulse.dev'],
+            [
+                'name'     => 'Admin User',
+                'password' => Hash::make('password'),
+                'role'     => 'admin',
+            ]
+        );
 
-        // ─── Viewer user ──────────────────────────────────────────────────
-        User::create([
-            'name'     => 'John Viewer',
-            'email'    => 'viewer@netpulse.dev',
-            'password' => Hash::make('password'),
-            'role'     => 'viewer',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'viewer@netpulse.dev'],
+            [
+                'name'     => 'John Viewer',
+                'password' => Hash::make('password'),
+                'role'     => 'viewer',
+            ]
+        );
 
-        // ─── Sample devices ───────────────────────────────────────────────
+        $this->command->info('✅ Users created.');
+
+        // ── Devices ───────────────────────────────────────────────────────
         $devices = [
-            ['name' => 'Core Router 01',     'ip_address' => '192.168.1.1',   'type' => 'router',   'location' => 'Server Room A', 'status' => 'online'],
-            ['name' => 'Core Router 02',     'ip_address' => '192.168.1.2',   'type' => 'router',   'location' => 'Server Room A', 'status' => 'online'],
-            ['name' => 'Distribution SW-01', 'ip_address' => '192.168.1.10',  'type' => 'switch',   'location' => 'Server Room A', 'status' => 'online'],
-            ['name' => 'Distribution SW-02', 'ip_address' => '192.168.1.11',  'type' => 'switch',   'location' => 'Server Room B', 'status' => 'offline'],
-            ['name' => 'Web Server 01',       'ip_address' => '192.168.2.10',  'type' => 'server',   'location' => 'DC Rack 1',     'status' => 'online'],
-            ['name' => 'Web Server 02',       'ip_address' => '192.168.2.11',  'type' => 'server',   'location' => 'DC Rack 1',     'status' => 'online'],
-            ['name' => 'DB Server Primary',   'ip_address' => '192.168.2.20',  'type' => 'server',   'location' => 'DC Rack 2',     'status' => 'online'],
-            ['name' => 'DB Server Replica',   'ip_address' => '192.168.2.21',  'type' => 'server',   'location' => 'DC Rack 2',     'status' => 'online'],
-            ['name' => 'Firewall Primary',    'ip_address' => '10.0.0.1',      'type' => 'firewall', 'location' => 'DMZ',           'status' => 'online'],
-            ['name' => 'Access Point Floor1', 'ip_address' => '192.168.3.10',  'type' => 'ap',       'location' => 'Floor 1',       'status' => 'online'],
-            ['name' => 'Access Point Floor2', 'ip_address' => '192.168.3.11',  'type' => 'ap',       'location' => 'Floor 2',       'status' => 'offline'],
-            ['name' => 'NAS Storage',         'ip_address' => '192.168.2.50',  'type' => 'server',   'location' => 'DC Rack 3',     'status' => 'online'],
+            // Simulated home LAN devices (private IPs)
+            ['name' => 'Home Router',        'ip_address' => '192.168.1.1',   'type' => 'router',   'location' => 'Living Room'],
+            ['name' => 'Living Room Switch',  'ip_address' => '192.168.1.2',   'type' => 'switch',   'location' => 'Living Room'],
+            ['name' => 'Desktop PC',          'ip_address' => '192.168.1.10',  'type' => 'server',   'location' => 'Study Room'],
+            ['name' => 'NAS Storage',         'ip_address' => '192.168.1.15',  'type' => 'server',   'location' => 'Study Room'],
+            ['name' => 'Wi-Fi AP Floor 1',    'ip_address' => '192.168.1.20',  'type' => 'ap',       'location' => 'Ground Floor'],
+            ['name' => 'Wi-Fi AP Floor 2',    'ip_address' => '192.168.1.21',  'type' => 'ap',       'location' => 'Second Floor'],
+            ['name' => 'Smart TV',            'ip_address' => '192.168.1.50',  'type' => 'other',    'location' => 'Living Room'],
+            ['name' => 'Security Camera',     'ip_address' => '192.168.1.60',  'type' => 'other',    'location' => 'Front Door'],
+            ['name' => 'Network Firewall',    'ip_address' => '192.168.1.254', 'type' => 'firewall', 'location' => 'Server Rack'],
+            // Real public internet hosts
+            ['name' => 'Google DNS',          'ip_address' => '8.8.8.8',         'type' => 'server', 'location' => 'Google — US'],
+            ['name' => 'Cloudflare DNS',      'ip_address' => '1.1.1.1',         'type' => 'server', 'location' => 'Cloudflare — Global'],
+            ['name' => 'OpenDNS',             'ip_address' => '208.67.222.222',   'type' => 'server', 'location' => 'Cisco — US'],
+            ['name' => 'Google Secondary',    'ip_address' => '8.8.4.4',         'type' => 'server', 'location' => 'Google — US'],
+            ['name' => 'Quad9 DNS',           'ip_address' => '9.9.9.9',         'type' => 'server', 'location' => 'Quad9 — Global'],
         ];
 
-        foreach ($devices as $deviceData) {
-            $device = Device::create(array_merge($deviceData, [
-                'created_by'      => $admin->id,
-                'last_checked_at' => now()->subSeconds(rand(10, 60)),
-                'latency_ms'      => $deviceData['status'] === 'online' ? rand(1, 45) : null,
-                'description'     => "Managed network device at {$deviceData['location']}",
-            ]));
-
-            // ─── Generate 7 days of monitoring history ─────────────────
-            $this->seedLogs($device);
+        $createdDevices = [];
+        foreach ($devices as $d) {
+            $device = Device::firstOrCreate(
+                ['ip_address' => $d['ip_address']],
+                [
+                    'name'            => $d['name'],
+                    'type'            => $d['type'],
+                    'location'        => $d['location'],
+                    'description'     => $d['name'] . ' — managed by NetPulse',
+                    'status'          => 'unknown',
+                    'latency_ms'      => null,
+                    'last_checked_at' => null,
+                    'created_by'      => $admin->id,
+                ]
+            );
+            $createdDevices[] = $device;
+            $this->command->line("  Device: {$device->name} ({$device->ip_address})");
         }
 
-        // ─── Seed sample alerts ───────────────────────────────────────────
-        $offlineDevices = Device::where('status', 'offline')->get();
-        foreach ($offlineDevices as $device) {
-            Alert::create([
-                'device_id'  => $device->id,
-                'type'       => 'offline',
-                'message'    => "Device {$device->name} ({$device->ip_address}) went OFFLINE.",
-                'is_read'    => false,
-                'created_at' => now()->subMinutes(rand(5, 60)),
-            ]);
+        $this->command->info('✅ ' . count($createdDevices) . ' devices created.');
+
+        // ── Monitoring history — 3 days only to keep it fast ─────────────
+        $this->command->info('Seeding monitoring history (3 days)...');
+
+        foreach ($createdDevices as $device) {
+            $this->seedHistory($device);
         }
+
+        $this->command->info('✅ Monitoring history seeded.');
+        $this->command->line('');
+        $this->command->info('Admin:  admin@netpulse.dev  / password');
+        $this->command->info('Viewer: viewer@netpulse.dev / password');
     }
 
-    private function seedLogs(Device $device): void
+    private function seedHistory(Device $device): void
     {
-        $now        = Carbon::now();
-        $start      = $now->copy()->subDays(7);
-        $current    = $start->copy();
-        $prevStatus = 'online';
+        $uptimeMap = [
+            'router' => 99, 'switch' => 99, 'firewall' => 99,
+            'server' => 97, 'ap' => 95, 'other' => 85,
+        ];
+        $latencyMap = [
+            'router' => [1, 15], 'switch' => [1, 12], 'firewall' => [1, 10],
+            'server' => [2, 35], 'ap' => [2, 25],     'other' => [5, 60],
+        ];
 
-        // One check every 30 seconds for 7 days = ~20160 logs
-        // We seed every 5 minutes to keep it manageable (~2016 logs)
+        $uptime  = $uptimeMap[$device->type]  ?? 90;
+        $range   = $latencyMap[$device->type] ?? [5, 50];
+
+        // Public IPs get internet-style latency
+        $isPublic = filter_var(
+            $device->ip_address,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        ) !== false;
+
+        if ($isPublic) {
+            $range  = [8, 60];
+            $uptime = 99;
+        }
+
+        $now     = Carbon::now();
+        $start   = $now->copy()->subDays(3); // 3 days = ~864 logs per device
+        $current = $start->copy();
+        $prev    = 'online';
+        $logs    = [];
+        $alerts  = [];
+
         while ($current->lessThan($now)) {
-            // Devices that are offline now were mostly online in the past
-            $isOnline = $device->status === 'online'
-                ? (rand(1, 100) <= 97)   // 97% uptime
-                : (rand(1, 100) <= 80);  // 80% uptime (flapping device)
+            $isOnline  = rand(1, 100) <= $uptime;
+            $isSpiking = rand(1, 100) <= 5;
+            $status    = $isOnline ? 'online' : 'offline';
+            $latencyMs = null;
 
-            $status = $isOnline ? 'online' : 'offline';
-
-            // Create alert on status change
-            if ($status !== $prevStatus && $current->greaterThan($start->copy()->addHours(1))) {
-                Alert::create([
-                    'device_id'  => $device->id,
-                    'type'       => $status === 'offline' ? 'offline' : 'recovered',
-                    'message'    => $status === 'offline'
-                        ? "Device {$device->name} went OFFLINE."
-                        : "Device {$device->name} recovered.",
-                    'is_read'    => true,
-                    'created_at' => $current->copy(),
-                ]);
+            if ($isOnline) {
+                $latencyMs = $isSpiking ? rand(120, 280) : rand($range[0], $range[1]);
             }
 
-            MonitoringLog::create([
+            $logs[] = [
                 'device_id'  => $device->id,
                 'status'     => $status,
-                'latency_ms' => $isOnline ? rand(1, 80) : null,
-                'checked_at' => $current->copy(),
-            ]);
+                'latency_ms' => $latencyMs,
+                'checked_at' => $current->toDateTimeString(),
+            ];
 
-            $prevStatus = $status;
+            // Status change alert
+            if ($status !== $prev && $current->greaterThan($start->copy()->addHours(1))) {
+                $emoji    = $status === 'offline' ? '🔴' : '🟢';
+                $alerts[] = [
+                    'device_id'  => $device->id,
+                    'type'       => $status === 'offline' ? 'offline' : 'recovered',
+                    'message'    => "{$emoji} [{$device->name}] " . ($status === 'offline' ? 'went OFFLINE.' : 'recovered.'),
+                    'is_read'    => (bool) ($current->lessThan($now->copy()->subHours(3))),
+                    'created_at' => $current->toDateTimeString(),
+                ];
+            }
+
+            $prev = $status;
             $current->addMinutes(5);
         }
+
+        // Insert in small chunks to avoid memory issues
+        foreach (array_chunk($logs, 200) as $chunk) {
+            DB::table('monitoring_logs')->insert($chunk);
+        }
+        foreach (array_chunk($alerts, 50) as $chunk) {
+            DB::table('alerts')->insert($chunk);
+        }
+
+        // Set final status on device
+        $last = end($logs);
+        $device->update([
+            'status'          => $last['status'],
+            'latency_ms'      => $last['latency_ms'],
+            'last_checked_at' => now(),
+        ]);
     }
 }

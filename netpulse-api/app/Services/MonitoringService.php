@@ -12,14 +12,12 @@ class MonitoringService
 {
     // ── Public API ────────────────────────────────────────────────────────
 
-    /**
-     * Check a single device: ping, log, alert, broadcast.
-     */
     public function checkDevice(Device $device): MonitoringLog
     {
-        [$status, $latencyMs] = $this->ping($device->ip_address);
+        [$status, $latencyMs] = $this->shouldSimulate($device->ip_address)
+            ? $this->simulate($device)
+            : $this->ping($device->ip_address);
 
-        // Persist monitoring log
         $log = MonitoringLog::create([
             'device_id'  => $device->id,
             'status'     => $status,
@@ -27,37 +25,29 @@ class MonitoringService
             'checked_at' => now(),
         ]);
 
-        // Detect transition and create alert
-        if ($device->status !== $status) {
+        if ($device->status !== 'unknown' && $device->status !== $status) {
             $this->handleStatusChange($device, $status);
         }
 
-        // High latency alert (>200ms)
-        if ($latencyMs !== null && $latencyMs > 200) {
+        if ($latencyMs !== null && $latencyMs > 150) {
             $this->handleHighLatency($device, $latencyMs);
         }
 
-        // Refresh device snapshot
         $device->update([
             'status'          => $status,
             'latency_ms'      => $latencyMs,
             'last_checked_at' => now(),
         ]);
 
-        // Broadcast real-time update
         try {
             broadcast(new DeviceStatusUpdated($device->fresh(), $log));
         } catch (\Exception $e) {
-            // Don't crash the scheduler if Pusher is not configured
             Log::warning('Broadcast failed: ' . $e->getMessage());
         }
 
         return $log;
     }
 
-    /**
-     * Check all devices — called by the Laravel scheduler.
-     */
     public function checkAll(): void
     {
         Device::all()->each(function (Device $device) {
@@ -69,23 +59,78 @@ class MonitoringService
         });
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────
+    // ── Simulation ────────────────────────────────────────────────────────
 
     /**
-     * Ping an IP address using system ping command.
-     * Returns [status, latency_ms].
+     * Private/RFC-1918 IPs = simulate (home LAN, unreachable remotely).
+     * Public IPs = real ping.
      */
+    private function shouldSimulate(string $ip): bool
+    {
+        return filter_var(
+            $ip,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        ) === false;
+    }
+
+    /**
+     * Simulate realistic ping behaviour per device type.
+     *
+     * Uptime %  |  Latency range  |  Device types
+     * ----------|-----------------|------------------
+     *    99%    |   1 – 15 ms     |  router, switch, firewall
+     *    97%    |   2 – 35 ms     |  server
+     *    95%    |   2 – 25 ms     |  ap (access point)
+     *    85%    |   5 – 60 ms     |  other (phones, TVs, printers)
+     *
+     * 5% chance of a congestion spike (100–280 ms) on any online device.
+     */
+    private function simulate(Device $device): array
+    {
+        $profiles = [
+            'router'   => ['uptime' => 99, 'min' =>  1, 'max' => 15],
+            'switch'   => ['uptime' => 99, 'min' =>  1, 'max' => 12],
+            'firewall' => ['uptime' => 99, 'min' =>  1, 'max' => 10],
+            'server'   => ['uptime' => 97, 'min' =>  2, 'max' => 35],
+            'ap'       => ['uptime' => 95, 'min' =>  2, 'max' => 25],
+            'other'    => ['uptime' => 85, 'min' =>  5, 'max' => 60],
+        ];
+
+        $profile  = $profiles[$device->type] ?? $profiles['other'];
+        $isOnline = rand(1, 100) <= $profile['uptime'];
+
+        if (!$isOnline) {
+            return ['offline', null];
+        }
+
+        $latency = rand($profile['min'], $profile['max']);
+
+        // 5% chance of congestion spike
+        if (rand(1, 100) <= 5) {
+            $latency = rand(100, 280);
+        }
+
+        // Slightly higher latency after recovery
+        if ($device->status === 'offline') {
+            $latency = min($latency + rand(10, 30), 200);
+        }
+
+        return ['online', $latency];
+    }
+
+    // ── Real Ping ─────────────────────────────────────────────────────────
+
     private function ping(string $ip): array
     {
-        // Sanitize IP to prevent command injection
         if (!filter_var($ip, FILTER_VALIDATE_IP)) {
             return ['offline', null];
         }
 
         $isWindows = PHP_OS_FAMILY === 'Windows';
         $cmd       = $isWindows
-            ? "ping -n 1 -w 2000 " . escapeshellarg($ip) . " 2>&1"
-            : "ping -c 1 -W 2 "    . escapeshellarg($ip) . " 2>&1";
+            ? 'ping -n 1 -w 2000 ' . escapeshellarg($ip) . ' 2>&1'
+            : 'ping -c 1 -W 2 '    . escapeshellarg($ip) . ' 2>&1';
 
         $start   = microtime(true);
         $output  = shell_exec($cmd) ?? '';
@@ -96,7 +141,6 @@ class MonitoringService
             : str_contains($output, '1 received') || str_contains($output, '1 packets received');
 
         if ($success) {
-            // Try to extract the actual latency from ping output
             $latency = $this->extractLatency($output, $isWindows) ?? $elapsed;
             return ['online', max(1, $latency)];
         }
@@ -104,18 +148,13 @@ class MonitoringService
         return ['offline', null];
     }
 
-    /**
-     * Parse latency from ping output string.
-     */
     private function extractLatency(string $output, bool $isWindows): ?int
     {
         if ($isWindows) {
-            // "Average = 12ms"
             if (preg_match('/Average\s*=\s*(\d+)ms/i', $output, $m)) {
                 return (int) $m[1];
             }
         } else {
-            // "time=12.3 ms" or "time=12 ms"
             if (preg_match('/time[=<]([\d.]+)\s*ms/i', $output, $m)) {
                 return (int) round((float) $m[1]);
             }
@@ -123,13 +162,15 @@ class MonitoringService
         return null;
     }
 
+    // ── Alerts ────────────────────────────────────────────────────────────
+
     private function handleStatusChange(Device $device, string $newStatus): void
     {
         $type    = $newStatus === 'offline' ? 'offline' : 'recovered';
         $emoji   = $newStatus === 'offline' ? '🔴' : '🟢';
         $message = $newStatus === 'offline'
-            ? "{$emoji} Device [{$device->name}] at {$device->ip_address} went OFFLINE."
-            : "{$emoji} Device [{$device->name}] at {$device->ip_address} has RECOVERED.";
+            ? "{$emoji} [{$device->name}] ({$device->ip_address}) went OFFLINE."
+            : "{$emoji} [{$device->name}] ({$device->ip_address}) has RECOVERED.";
 
         Alert::create([
             'device_id'  => $device->id,
@@ -143,17 +184,16 @@ class MonitoringService
 
     private function handleHighLatency(Device $device, int $latencyMs): void
     {
-        // Only alert if no recent high-latency alert exists (within 30 min)
-        $recentAlert = Alert::where('device_id', $device->id)
+        $recent = Alert::where('device_id', $device->id)
             ->where('type', 'high_latency')
             ->where('created_at', '>=', now()->subMinutes(30))
             ->exists();
 
-        if (!$recentAlert) {
+        if (!$recent) {
             Alert::create([
                 'device_id'  => $device->id,
                 'type'       => 'high_latency',
-                'message'    => "⚠️ High latency detected on [{$device->name}]: {$latencyMs}ms",
+                'message'    => "⚠️ High latency on [{$device->name}]: {$latencyMs}ms",
                 'created_at' => now(),
             ]);
         }
