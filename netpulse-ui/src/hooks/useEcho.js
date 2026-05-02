@@ -1,36 +1,44 @@
 import { useEffect, useRef } from 'react'
 
 let echoInstance = null
+let initAttempted = false
 
 function getEcho() {
   if (echoInstance) return echoInstance
-  // Lazy-load to avoid errors if Pusher keys are not set
+  if (initAttempted) return null   // already tried and failed, don't retry
+  initAttempted = true
+
   const key     = import.meta.env.VITE_PUSHER_KEY
   const cluster = import.meta.env.VITE_PUSHER_CLUSTER || 'mt1'
 
-  if (!key || key === 'your_pusher_key') {
-    console.warn('[NetPulse] Pusher key not configured. Real-time updates disabled.')
+  // Silently skip if Pusher key is not configured
+  if (!key || key === 'your_pusher_key' || key.trim() === '') {
     return null
   }
 
-  import('laravel-echo').then(({ default: Echo }) => {
+  try {
     import('pusher-js').then(({ default: Pusher }) => {
-      window.Pusher    = Pusher
-      echoInstance     = new Echo({
-        broadcaster: 'pusher',
-        key,
-        cluster,
-        forceTLS:    true,
+      import('laravel-echo').then(({ default: Echo }) => {
+        window.Pusher = Pusher
+        echoInstance  = new Echo({
+          broadcaster: 'pusher',
+          key,
+          cluster,
+          forceTLS:    true,
+        })
       })
     })
-  })
+  } catch (_) {
+    // Pusher packages not installed — fall back to polling silently
+  }
 
   return null
 }
 
 /**
- * Subscribe to a public Laravel Echo channel and listen for an event.
- * callback is called with the event payload.
+ * useEcho — subscribes to a Laravel Echo public channel event.
+ * Falls back to polling (handled by the page's setInterval) if Pusher
+ * is not configured.
  *
  * Usage:
  *   useEcho('network-monitoring', 'DeviceStatusUpdated', (data) => { ... })
@@ -41,13 +49,13 @@ export function useEcho(channel, event, callback) {
 
   useEffect(() => {
     const echo = getEcho()
-    if (!echo) return
+    if (!echo) return   // no Pusher — polling takes over
 
     const ch = echo.channel(channel)
     ch.listen(`.${event}`, (data) => callbackRef.current(data))
 
     return () => {
-      ch.stopListening(`.${event}`)
+      try { ch.stopListening(`.${event}`) } catch (_) {}
     }
   }, [channel, event])
 }

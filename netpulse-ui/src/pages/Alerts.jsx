@@ -1,61 +1,132 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState } from 'react'
+import api from '../lib/api'
+import AlertList from '../components/alerts/AlertList'
+import useToast from '../hooks/useToast'
+import {
+  Button, PageHeader, LoadingPage, ToastContainer,
+} from '../components/ui'
 
-const Alerts = () => {
-  const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function Alerts() {
+  const [alerts,     setAlerts]     = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [unreadOnly, setUnreadOnly] = useState(false)
+  const [page,       setPage]       = useState(1)
+  const [meta,       setMeta]       = useState(null)
+  const { toasts, addToast, removeToast } = useToast()
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = async (p = 1) => {
+    setLoading(true)
     try {
-      const response = await axios.get("/api/alerts"); // adjust endpoint if needed
-      setAlerts(response.data);
-    } catch (error) {
-      console.error("Error fetching alerts:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      const { data } = await api.get('/alerts', {
+        params: { ...(unreadOnly ? { unread: 1 } : {}), page: p, per_page: 20 },
+      })
 
-  useEffect(() => {
-    fetchAlerts();
-  }, []);
+      // Handle both paginated {data:[]} and plain [] responses safely
+      const items = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : [])
+      setAlerts(items)
+      setMeta(data?.meta ?? null)
+      setPage(p)
+    } catch (_) {
+      addToast('Failed to load alerts.', 'error')
+      setAlerts([]) // prevent map crash
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchAlerts(1) }, [unreadOnly])
+
+  const handleMarkRead = async (alert) => {
+    try {
+      await api.patch(`/alerts/${alert.id}/read`)
+      setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, is_read: true } : a))
+    } catch (_) {
+      addToast('Failed to mark as read.', 'error')
+    }
+  }
+
+  const handleMarkAllRead = async () => {
+    try {
+      await api.post('/alerts/read-all')
+      setAlerts(prev => prev.map(a => ({ ...a, is_read: true })))
+      addToast('All alerts marked as read.', 'success')
+    } catch (_) {
+      addToast('Failed.', 'error')
+    }
+  }
+
+  const handleDelete = async (id) => {
+    try {
+      await api.delete(`/alerts/${id}`)
+      setAlerts(prev => prev.filter(a => a.id !== id))
+      addToast('Alert deleted.', 'success')
+    } catch (_) {
+      addToast('Failed to delete.', 'error')
+    }
+  }
+
+  const unreadCount = alerts.filter(a => !a.is_read).length
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-semibold mb-4">Alerts</h1>
+    <div className="p-6 max-w-3xl mx-auto space-y-6">
 
-      {loading ? (
-        <p className="text-gray-500">Loading alerts...</p>
-      ) : alerts.length === 0 ? (
-        <p className="text-gray-500">No alerts found.</p>
-      ) : (
-        <div className="space-y-4">
-          {alerts.map((alert) => (
-            <div
-              key={alert.id}
-              className={`p-4 rounded-xl shadow border-l-4 ${
-                alert.severity === "high"
-                  ? "border-red-500 bg-red-50"
-                  : alert.severity === "medium"
-                  ? "border-yellow-500 bg-yellow-50"
-                  : "border-green-500 bg-green-50"
-              }`}
-            >
-              <h2 className="font-semibold text-lg">
-                {alert.title || "Alert"}
-              </h2>
-              <p className="text-sm text-gray-600">
-                {alert.message || "No message provided"}
-              </p>
-              <span className="text-xs text-gray-400">
-                {new Date(alert.created_at).toLocaleString()}
+      <PageHeader
+        title={
+          <span className="flex items-center gap-2">
+            Alerts
+            {unreadCount > 0 && (
+              <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {unreadCount}
               </span>
-            </div>
-          ))}
+            )}
+          </span>
+        }
+        subtitle="Device status change events and notifications"
+        action={
+          <div className="flex gap-2 items-center">
+            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={unreadOnly}
+                onChange={e => setUnreadOnly(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600"
+              />
+              Unread only
+            </label>
+            {unreadCount > 0 && (
+              <Button size="sm" variant="secondary" onClick={handleMarkAllRead}>
+                Mark all read
+              </Button>
+            )}
+          </div>
+        }
+      />
+
+      {loading
+        ? <LoadingPage />
+        : <AlertList
+            alerts={alerts}
+            onMarkRead={handleMarkRead}
+            onDelete={handleDelete}
+          />
+      }
+
+      {/* Pagination */}
+      {meta && meta.last_page > 1 && (
+        <div className="flex items-center justify-between pt-2 text-sm text-gray-500">
+          <span>Page {meta.current_page} of {meta.last_page} · {meta.total} total</span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => fetchAlerts(page - 1)}>
+              ← Prev
+            </Button>
+            <Button size="sm" variant="secondary" disabled={page >= meta.last_page} onClick={() => fetchAlerts(page + 1)}>
+              Next →
+            </Button>
+          </div>
         </div>
       )}
-    </div>
-  );
-};
 
-export default Alerts;
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+    </div>
+  )
+}

@@ -27,18 +27,24 @@ class DashboardController extends Controller
     }
 
     /**
-     * GET /api/dashboard/latency-chart?device_id=1&hours=24
+     * GET /api/dashboard/latency-chart?hours=24&device_id=1
+     *
+     * Groups by 5-minute buckets to avoid MySQL strict mode issues
+     * with mismatched SELECT / GROUP BY expressions.
      */
     public function latencyChart(Request $request): JsonResponse
     {
         $hours    = min((int) $request->query('hours', 24), 168);
         $deviceId = $request->query('device_id');
 
+        // Use a single consistent time expression for both SELECT and GROUP BY
+        $timeExpr = "FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(checked_at) / 300) * 300, '%m-%d %H:%i')";
+
         $data = MonitoringLog::when($deviceId, fn($q) => $q->where('device_id', $deviceId))
             ->where('checked_at', '>=', now()->subHours($hours))
             ->where('status', 'online')
-            ->selectRaw("DATE_FORMAT(checked_at, '%m-%d %H:%i') as time, ROUND(AVG(latency_ms)) as avg_latency")
-            ->groupByRaw("DATE_FORMAT(checked_at, '%Y-%m-%d %H:%i')")
+            ->selectRaw("{$timeExpr} as time, ROUND(AVG(latency_ms)) as avg_latency")
+            ->groupByRaw($timeExpr)
             ->orderByRaw("MIN(checked_at)")
             ->limit(288)
             ->get();
@@ -47,7 +53,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * GET /api/dashboard/uptime-chart?device_id=1&days=7
+     * GET /api/dashboard/uptime-chart?days=7&device_id=1
      */
     public function uptimeChart(Request $request): JsonResponse
     {
@@ -57,10 +63,10 @@ class DashboardController extends Controller
         $data = MonitoringLog::when($deviceId, fn($q) => $q->where('device_id', $deviceId))
             ->where('checked_at', '>=', now()->subDays($days))
             ->selectRaw("DATE(checked_at) as date,
-                         SUM(status = 'online') as online_count,
+                         SUM(CASE WHEN status = 'online' THEN 1 ELSE 0 END) as online_count,
                          COUNT(*) as total_count")
-            ->groupBy('date')
-            ->orderBy('date')
+            ->groupByRaw("DATE(checked_at)")
+            ->orderByRaw("DATE(checked_at)")
             ->get()
             ->map(fn($row) => [
                 'date'   => $row->date,
