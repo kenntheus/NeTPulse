@@ -58,7 +58,6 @@ Monitor routers, switches, servers, and firewalls in real time with live ping, c
 ```bash
 cd netpulse-api
 composer install
-cp .env.example .env
 php artisan key:generate
 php artisan migrate --seed
 php artisan serve
@@ -69,7 +68,6 @@ php artisan serve
 ```bash
 cd netpulse-ui
 npm install
-cp .env.example .env
 npm run dev
 ```
 
