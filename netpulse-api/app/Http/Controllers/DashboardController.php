@@ -10,9 +10,6 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    /**
-     * GET /api/dashboard/summary
-     */
     public function summary(): JsonResponse
     {
         $devices = Device::all();
@@ -26,18 +23,11 @@ class DashboardController extends Controller
         ]);
     }
 
-    /**
-     * GET /api/dashboard/latency-chart?hours=24&device_id=1
-     *
-     * Groups by 5-minute buckets to avoid MySQL strict mode issues
-     * with mismatched SELECT / GROUP BY expressions.
-     */
     public function latencyChart(Request $request): JsonResponse
     {
         $hours    = min((int) $request->query('hours', 24), 168);
         $deviceId = $request->query('device_id');
 
-        // Use a single consistent time expression for both SELECT and GROUP BY
         $timeExpr = "FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(checked_at) / 300) * 300, '%m-%d %H:%i')";
 
         $data = MonitoringLog::when($deviceId, fn($q) => $q->where('device_id', $deviceId))
@@ -52,9 +42,6 @@ class DashboardController extends Controller
         return response()->json($data);
     }
 
-    /**
-     * GET /api/dashboard/uptime-chart?days=7&device_id=1
-     */
     public function uptimeChart(Request $request): JsonResponse
     {
         $days     = min((int) $request->query('days', 7), 30);

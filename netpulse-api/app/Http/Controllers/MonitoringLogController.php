@@ -10,15 +10,6 @@ use Illuminate\Http\Response;
 
 class MonitoringLogController extends Controller
 {
-    /**
-     * GET /api/devices/{device}/logs
-     *
-     * Query params:
-     *   from     (date)    e.g. 2024-01-01
-     *   to       (date)    e.g. 2024-01-07
-     *   status   (string)  online|offline
-     *   per_page (int)     default 50
-     */
     public function index(Request $request, Device $device): JsonResponse
     {
         $logs = MonitoringLog::where('device_id', $device->id)
@@ -31,12 +22,6 @@ class MonitoringLogController extends Controller
         return response()->json($logs);
     }
 
-    /**
-     * GET /api/logs/export
-     *
-     * Exports monitoring logs as a CSV download.
-     * Query params: device_id, from, to
-     */
     public function export(Request $request): Response
     {
         $deviceId = $request->query('device_id');
@@ -49,7 +34,6 @@ class MonitoringLogController extends Controller
             ->limit(50000)
             ->get();
 
-        // Build CSV string
         $csv = "ID,Device Name,IP Address,Status,Latency (ms),Checked At\n";
 
         foreach ($logs as $log) {

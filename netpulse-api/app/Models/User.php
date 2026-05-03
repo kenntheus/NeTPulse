@@ -20,7 +20,6 @@ class User extends Authenticatable
         'password'          => 'hashed',
     ];
 
-    // ── Helpers ──────────────────────────────────────────────────────────
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
@@ -31,7 +30,6 @@ class User extends Authenticatable
         return $this->role === 'viewer';
     }
 
-    // ── Relationships ─────────────────────────────────────────────────────
     public function devices()
     {
         return $this->hasMany(Device::class, 'created_by');

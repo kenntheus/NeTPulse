@@ -7,10 +7,6 @@ use App\Models\User;
 
 class DevicePolicy
 {
-    /**
-     * Admins can do everything. Viewers can only read.
-     */
-
     public function viewAny(User $user): bool  { return true; }
     public function view(User $user, Device $device): bool { return true; }
 

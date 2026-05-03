@@ -19,7 +19,6 @@ class Device extends Model
         'last_checked_at' => 'datetime',
     ];
 
-    // ── Relationships ─────────────────────────────────────────────────────
     public function logs()
     {
         return $this->hasMany(MonitoringLog::class)->orderByDesc('checked_at');
@@ -35,7 +34,6 @@ class Device extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    // ── Scopes ────────────────────────────────────────────────────────────
     public function scopeOnline($query)
     {
         return $query->where('status', 'online');

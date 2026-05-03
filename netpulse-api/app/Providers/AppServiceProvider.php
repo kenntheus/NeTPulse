@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Providers;
 
 use App\Models\Device;
 use App\Models\MonitoringLog;

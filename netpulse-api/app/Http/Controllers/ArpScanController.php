@@ -9,10 +9,6 @@ class ArpScanController extends Controller
 {
     public function __construct(private ArpScannerService $scanner) {}
 
-    /**
-     * POST /api/arp/scan
-     * Trigger a manual ARP scan immediately.
-     */
     public function scan(): JsonResponse
     {
         $result = $this->scanner->scan();
