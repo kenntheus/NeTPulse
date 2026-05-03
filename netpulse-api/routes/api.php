@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AlertController;
+use App\Http\Controllers\ArpScanController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
@@ -22,7 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me',      [AuthController::class, 'me']);
     });
 
-    // Dashboard stats
+    // Dashboard
     Route::prefix('dashboard')->group(function () {
         Route::get('/summary',       [DashboardController::class, 'summary']);
         Route::get('/latency-chart', [DashboardController::class, 'latencyChart']);
@@ -38,8 +39,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/logs/export',           [MonitoringLogController::class, 'export']);
 
     // Alerts
-    Route::get('/alerts',                    [AlertController::class, 'index']);
-    Route::patch('/alerts/{alert}/read',     [AlertController::class, 'markRead']);
-    Route::post('/alerts/read-all',          [AlertController::class, 'markAllRead']);
-    Route::delete('/alerts/{alert}',         [AlertController::class, 'destroy']);
+    Route::get('/alerts',                [AlertController::class, 'index']);
+    Route::patch('/alerts/{alert}/read', [AlertController::class, 'markRead']);
+    Route::post('/alerts/read-all',      [AlertController::class, 'markAllRead']);
+    Route::delete('/alerts/{alert}',     [AlertController::class, 'destroy']);
+
+    // ARP Scanner — admin only
+    Route::post('/arp/scan', [ArpScanController::class, 'scan']);
 });

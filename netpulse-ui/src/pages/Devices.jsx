@@ -1,263 +1,281 @@
-import { useEffect, useState } from 'react'
-import api from '../lib/api'
-import { useAuth } from '../store/AuthContext'
-import { Button, Modal, Badge, StatusDot, EmptyState, Spinner } from '../components/ui'
-
-const DEVICE_TYPES = ['router', 'switch', 'server', 'firewall', 'ap', 'other']
-const TYPE_ICON    = { router: '⬡', switch: '⬢', server: '▣', firewall: '⬛', ap: '◎', other: '◈' }
-
-const emptyForm = { name: '', ip_address: '', type: 'server', location: '', description: '' }
+import { useState } from 'react'
+import { useAuth }    from '../hooks/useAuth'
+import { useDevices } from '../hooks/useDevices'
+import { useEcho }    from '../hooks/useEcho'
+import useToast       from '../hooks/useToast'
+import api            from '../lib/api'
+import DeviceCard from '../components/devices/DeviceCard'
+import DeviceForm from '../components/devices/DeviceForm'
+import {
+  Button, Modal, ConfirmDialog, ToastContainer,
+  EmptyState, LoadingPage, PageHeader, Select,
+} from '../components/ui'
 
 export default function Devices() {
-  const { isAdmin }                     = useAuth()
-  const [devices,    setDevices]        = useState([])
-  const [loading,    setLoading]        = useState(true)
-  const [modalOpen,  setModalOpen]      = useState(false)
-  const [editDevice, setEditDevice]     = useState(null)
-  const [form,       setForm]           = useState(emptyForm)
-  const [formError,  setFormError]      = useState('')
-  const [submitting, setSubmitting]     = useState(false)
-  const [pingLoading,setPingLoading]    = useState({})
-  const [search,     setSearch]         = useState('')
-  const [filter,     setFilter]         = useState('')
+  const { isAdmin } = useAuth()
+  const [filters, setFilters] = useState({ search: '', status: '', type: '' })
+  const { devices, loading, addDevice, updateDevice, deleteDevice, pingDevice, applyRealtimeUpdate } = useDevices(filters)
+  const { toasts, addToast, removeToast } = useToast()
 
-  const fetchDevices = async () => {
-    setLoading(true)
-    try {
-      const params = {}
-      if (search) params.search = search
-      if (filter) params.status = filter
-      const { data } = await api.get('/devices', { params })
-      setDevices(data.data)
-    } catch (_) {}
-    finally { setLoading(false) }
+  const [addOpen,      setAddOpen]      = useState(false)
+  const [editDevice,   setEditDevice]   = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deleting,     setDeleting]     = useState(false)
+  const [scanning,     setScanning]     = useState(false)
+  const [scanResult,   setScanResult]   = useState(null)
+
+  useEcho('network-monitoring', 'DeviceStatusUpdated', applyRealtimeUpdate)
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  const handleAdd = async (formData) => {
+    await addDevice(formData)
+    setAddOpen(false)
+    addToast('Device added successfully!', 'success')
   }
 
-  useEffect(() => { fetchDevices() }, [search, filter])
-
-  const openAdd = () => {
+  const handleEdit = async (formData) => {
+    await updateDevice(editDevice.id, formData)
     setEditDevice(null)
-    setForm(emptyForm)
-    setFormError('')
-    setModalOpen(true)
+    addToast('Device updated.', 'success')
   }
 
-  const openEdit = (device) => {
-    setEditDevice(device)
-    setForm({ name: device.name, ip_address: device.ip_address, type: device.type, location: device.location || '', description: device.description || '' })
-    setFormError('')
-    setModalOpen(true)
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setSubmitting(true)
-    setFormError('')
+  const handleDelete = async () => {
+    setDeleting(true)
     try {
-      if (editDevice) {
-        await api.put(`/devices/${editDevice.id}`, form)
-      } else {
-        await api.post('/devices', form)
-      }
-      setModalOpen(false)
-      fetchDevices()
-    } catch (err) {
-      const errors = err.response?.data?.errors
-      setFormError(errors ? Object.values(errors)[0]?.[0] : 'Something went wrong.')
+      await deleteDevice(deleteTarget.id)
+      setDeleteTarget(null)
+      addToast(`"${deleteTarget.name}" deleted.`, 'success')
+    } catch {
+      addToast('Failed to delete device.', 'error')
     } finally {
-      setSubmitting(false)
+      setDeleting(false)
     }
   }
 
-  const handleDelete = async (device) => {
-    if (!confirm(`Delete "${device.name}"? This also deletes all logs.`)) return
+  const handlePing = async (device) => {
     try {
-      await api.delete(`/devices/${device.id}`)
-      setDevices(prev => prev.filter(d => d.id !== device.id))
-    } catch (_) {}
+      const result = await pingDevice(device.id)
+      const label  = result.status === 'online' ? `Online — ${result.latency_ms}ms` : 'Offline'
+      addToast(`${device.name}: ${label}`, result.status === 'online' ? 'success' : 'error')
+    } catch {
+      addToast('Ping failed.', 'error')
+    }
   }
 
-  const handlePing = async (device) => {
-    setPingLoading(p => ({ ...p, [device.id]: true }))
+  // ARP network scan
+  const handleArpScan = async () => {
+    setScanning(true)
+    setScanResult(null)
     try {
-      const { data } = await api.post(`/devices/${device.id}/ping`)
-      setDevices(prev =>
-        prev.map(d => d.id === device.id
-          ? { ...d, status: data.status, latency_ms: data.latency_ms, last_checked_at: data.checked_at }
-          : d
-        )
+      const { data } = await api.post('/arp/scan')
+      setScanResult(data)
+      addToast(
+        data.new > 0
+          ? `Found ${data.found} devices — ${data.new} new added!`
+          : `Scanned network — ${data.found} devices found, none new.`,
+        data.new > 0 ? 'success' : 'info'
       )
-    } catch (_) {}
-    finally { setPingLoading(p => ({ ...p, [device.id]: false })) }
+      // Refresh device list
+      window.location.reload()
+    } catch {
+      addToast('ARP scan failed. Make sure Laravel is running on your local machine.', 'error')
+    } finally {
+      setScanning(false)
+    }
   }
+
+  // Client-side filter
+  const visible = devices.filter(d => {
+    const q = filters.search.toLowerCase()
+    if (q && !d.name.toLowerCase().includes(q) && !d.ip_address.includes(q)) return false
+    if (filters.status && d.status !== filters.status) return false
+    if (filters.type   && d.type   !== filters.type)   return false
+    return true
+  })
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-fade-in">
+    <div className="p-6 max-w-screen-xl mx-auto space-y-6">
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Devices</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage monitored network devices</p>
+      <PageHeader
+        title="Devices"
+        subtitle={`${devices.length} device${devices.length !== 1 ? 's' : ''} monitored`}
+        action={
+          <div className="flex gap-2">
+            {/* ARP Network Scan button — admin only */}
+            {isAdmin() && (
+              <Button
+                variant="secondary"
+                onClick={handleArpScan}
+                loading={scanning}
+                title="Scan your local network for connected devices"
+              >
+                {!scanning && (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                  </svg>
+                )}
+                {scanning ? 'Scanning…' : 'Scan Network'}
+              </Button>
+            )}
+
+            {isAdmin() && (
+              <Button onClick={() => setAddOpen(true)}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add device
+              </Button>
+            )}
+          </div>
+        }
+      />
+
+      {/* Scan result banner */}
+      {scanResult && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-5 py-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-1">
+                🔍 ARP Scan Complete
+              </p>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                Found <strong>{scanResult.found}</strong> devices on your network.
+                {scanResult.new > 0
+                  ? <> <strong>{scanResult.new}</strong> new device(s) were automatically added.</>
+                  : <> No new devices discovered.</>
+                }
+              </p>
+              {scanResult.entries?.length > 0 && (
+                <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {scanResult.entries.map((e, i) => (
+                    <div key={i} className="bg-white dark:bg-blue-900/30 rounded-lg px-3 py-2 text-xs">
+                      <p className="font-mono font-semibold text-gray-900 dark:text-white">{e.ip}</p>
+                      <p className="text-gray-500 dark:text-gray-400 font-mono truncate">{e.mac}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setScanResult(null)}
+              className="text-blue-400 hover:text-blue-600 text-xl leading-none flex-shrink-0"
+            >
+              ×
+            </button>
+          </div>
         </div>
-        {isAdmin() && (
-          <Button onClick={openAdd}>+ Add device</Button>
-        )}
-      </div>
+      )}
 
       {/* Filters */}
-      <div className="flex gap-3 flex-wrap">
-        <input
-          type="search"
-          placeholder="Search name or IP..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 w-56"
-        />
-        <select
-          value={filter}
-          onChange={e => setFilter(e.target.value)}
-          className="px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
-        >
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="search"
+            placeholder="Search name or IP…"
+            value={filters.search}
+            onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
+            className="pl-9 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 w-52"
+          />
+        </div>
+
+        <Select value={filters.status} onChange={e => setFilters(f => ({ ...f, status: e.target.value }))} className="w-36">
           <option value="">All statuses</option>
-          <option value="online">Online</option>
-          <option value="offline">Offline</option>
-          <option value="unknown">Unknown</option>
-        </select>
+          <option value="online">🟢 Online</option>
+          <option value="offline">🔴 Offline</option>
+          <option value="unknown">⚪ Unknown</option>
+        </Select>
+
+        <Select value={filters.type} onChange={e => setFilters(f => ({ ...f, type: e.target.value }))} className="w-36">
+          <option value="">All types</option>
+          <option value="router">Router</option>
+          <option value="switch">Switch</option>
+          <option value="server">Server</option>
+          <option value="firewall">Firewall</option>
+          <option value="ap">Access Point</option>
+          <option value="other">Other</option>
+        </Select>
+
+        {(filters.search || filters.status || filters.type) && (
+          <Button size="sm" variant="ghost" onClick={() => setFilters({ search: '', status: '', type: '' })}>
+            Clear
+          </Button>
+        )}
+
+        <div className="ml-auto flex gap-2 text-xs">
+          <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-1 rounded-md font-medium">
+            {devices.filter(d => d.status === 'online').length} online
+          </span>
+          <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-1 rounded-md font-medium">
+            {devices.filter(d => d.status === 'offline').length} offline
+          </span>
+        </div>
       </div>
 
       {/* Device grid */}
-      {loading
-        ? <div className="flex justify-center py-12"><Spinner size="lg" /></div>
-        : devices.length === 0
-          ? <EmptyState icon="⬡" title="No devices found" description={isAdmin() ? 'Add your first network device to start monitoring.' : 'No devices match your filters.'} action={isAdmin() ? <Button onClick={openAdd}>Add device</Button> : null} />
-          : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {devices.map(device => (
-                <div key={device.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md dark:hover:border-gray-600 transition-all">
-
-                  {/* Card header */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{TYPE_ICON[device.type]}</span>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{device.name}</h3>
-                        <p className="text-xs text-gray-500 font-mono">{device.ip_address}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StatusDot status={device.status} animate />
-                      <Badge variant={device.status}>{device.status}</Badge>
-                    </div>
-                  </div>
-
-                  {/* Details */}
-                  <div className="space-y-1.5 text-xs text-gray-500 dark:text-gray-400 mb-4">
-                    <div className="flex justify-between">
-                      <span>Type</span>
-                      <span className="capitalize text-gray-700 dark:text-gray-300">{device.type}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Location</span>
-                      <span className="text-gray-700 dark:text-gray-300">{device.location || '—'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Latency</span>
-                      <span className={`font-mono ${device.latency_ms > 100 ? 'text-amber-500' : 'text-green-500'}`}>
-                        {device.latency_ms != null ? `${device.latency_ms}ms` : '—'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Last check</span>
-                      <span>{device.last_checked_at ? new Date(device.last_checked_at).toLocaleTimeString() : '—'}</span>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
-                    <Button
-                      size="sm" variant="secondary"
-                      loading={pingLoading[device.id]}
-                      onClick={() => handlePing(device)}
-                      className="flex-1"
-                    >
-                      Ping
-                    </Button>
-                    {isAdmin() && (
-                      <>
-                        <Button size="sm" variant="secondary" onClick={() => openEdit(device)}>Edit</Button>
-                        <Button size="sm" variant="danger" onClick={() => handleDelete(device)}>Del</Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
-      }
-
-      {/* Add / Edit modal */}
-      <Modal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={editDevice ? `Edit — ${editDevice.name}` : 'Add new device'}
-      >
-        {formError && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg mb-4">
-            {formError}
-          </div>
-        )}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {[
-            { key: 'name',       label: 'Device name', placeholder: 'Core Router 01', required: true },
-            { key: 'ip_address', label: 'IP address',  placeholder: '192.168.1.1',    required: true },
-            { key: 'location',   label: 'Location',    placeholder: 'Server Room A',  required: false },
-          ].map(({ key, label, placeholder, required }) => (
-            <div key={key}>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
-              <input
-                type="text"
-                value={form[key]}
-                onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                placeholder={placeholder}
-                required={required}
-                className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
-          ))}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Device type</label>
-            <select
-              value={form.type}
-              onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-              className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            >
-              {DEVICE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-            <textarea
-              value={form.description}
-              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              rows={3}
-              className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-              placeholder="Optional notes about this device..."
+      {loading ? (
+        <LoadingPage />
+      ) : visible.length === 0 ? (
+        <EmptyState
+          icon="⬡"
+          title="No devices found"
+          description={
+            filters.search || filters.status || filters.type
+              ? 'Try adjusting your filters.'
+              : isAdmin()
+              ? 'Click "Scan Network" to auto-discover devices, or add one manually.'
+              : 'No devices have been added yet.'
+          }
+          action={
+            isAdmin() && !filters.search && !filters.status && !filters.type && (
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={handleArpScan} loading={scanning}>
+                  Scan Network
+                </Button>
+                <Button onClick={() => setAddOpen(true)}>Add manually</Button>
+              </div>
+            )
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {visible.map(device => (
+            <DeviceCard
+              key={device.id}
+              device={device}
+              isAdmin={isAdmin()}
+              onEdit={setEditDevice}
+              onDelete={setDeleteTarget}
+              onPing={handlePing}
             />
-          </div>
+          ))}
+        </div>
+      )}
 
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" loading={submitting} className="flex-1 justify-center">
-              {editDevice ? 'Save changes' : 'Add device'}
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-          </div>
-        </form>
+      {/* Modals */}
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add new device">
+        <DeviceForm onSubmit={handleAdd} onCancel={() => setAddOpen(false)} submitLabel="Add device" />
       </Modal>
+
+      <Modal open={!!editDevice} onClose={() => setEditDevice(null)} title={`Edit — ${editDevice?.name ?? ''}`}>
+        <DeviceForm initialData={editDevice} onSubmit={handleEdit} onCancel={() => setEditDevice(null)} submitLabel="Save changes" />
+      </Modal>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        loading={deleting}
+        title="Delete device"
+        message={`Delete "${deleteTarget?.name}"? This removes all logs and alerts for this device.`}
+        confirmLabel="Delete device"
+        confirmVariant="danger"
+      />
+
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   )
 }
