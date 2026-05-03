@@ -87,6 +87,6 @@ npm run dev
 
 <div align="center">
 
-Built with ❤️ using Laravel and React
+Built with ☕ & powered by Laravel and React
 
 </div>
