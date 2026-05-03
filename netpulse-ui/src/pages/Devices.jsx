@@ -196,6 +196,13 @@ export default function Devices() {
           <option value="server">Server</option>
           <option value="firewall">Firewall</option>
           <option value="ap">Access Point</option>
+          <option value="phone">Phone</option>
+          <option value="tablet">Tablet / iPad</option>
+          <option value="laptop">Laptop</option>
+          <option value="pc">Desktop PC</option>
+          <option value="cctv">CCTV / Camera</option>
+          <option value="printer">Printer</option>
+          <option value="smarttv">Smart TV</option>
           <option value="other">Other</option>
         </Select>
 

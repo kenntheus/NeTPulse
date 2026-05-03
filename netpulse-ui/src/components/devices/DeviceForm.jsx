@@ -2,44 +2,39 @@ import { useState, useEffect } from 'react'
 import { Button, Input, Select, Textarea } from '../ui'
 
 const DEVICE_TYPES = [
-  { value: 'router',   label: '⬡  Router'   },
-  { value: 'switch',   label: '⬢  Switch'   },
-  { value: 'server',   label: '▣  Server'   },
-  { value: 'firewall', label: '⬛  Firewall' },
-  { value: 'ap',       label: '◎  Access Point' },
-  { value: 'other',    label: '◈  Other'    },
+  // Network
+  { value: 'router',   label: '🌐  Router',        group: 'Network' },
+  { value: 'switch',   label: '🔀  Switch',         group: 'Network' },
+  { value: 'firewall', label: '🛡️  Firewall',       group: 'Network' },
+  { value: 'ap',       label: '📡  Access Point',   group: 'Network' },
+  // Computers
+  { value: 'pc',       label: '🖥️  Desktop PC',     group: 'Computers' },
+  { value: 'laptop',   label: '💻  Laptop',          group: 'Computers' },
+  { value: 'server',   label: '🗄️  Server',          group: 'Computers' },
+  // Mobile
+  { value: 'phone',    label: '📱  Phone',           group: 'Mobile' },
+  { value: 'tablet',   label: '📟  Tablet / iPad',   group: 'Mobile' },
+  // Home
+  { value: 'smarttv',  label: '📺  Smart TV',        group: 'Home' },
+  { value: 'cctv',     label: '📷  CCTV / Camera',   group: 'Home' },
+  { value: 'printer',  label: '🖨️  Printer',         group: 'Home' },
+  { value: 'other',    label: '◈   Other',           group: 'Other' },
 ]
 
-const EMPTY = {
-  name:        '',
-  ip_address:  '',
-  type:        'server',
-  location:    '',
-  description: '',
-}
+const EMPTY = { name: '', ip_address: '', type: 'other', location: '', description: '' }
 
-/**
- * DeviceForm — shared form for adding and editing devices.
- *
- * Props:
- *   initialData  object    prefills fields when editing (optional)
- *   onSubmit     async fn  called with form data; should throw on API error
- *   onCancel     fn        called when Cancel is clicked
- *   submitLabel  string    button label (default: 'Save device')
- */
 export default function DeviceForm({ initialData = null, onSubmit, onCancel, submitLabel = 'Save device' }) {
-  const [form,    setForm]    = useState(EMPTY)
-  const [errors,  setErrors]  = useState({})
-  const [loading, setLoading] = useState(false)
+  const [form,     setForm]     = useState(EMPTY)
+  const [errors,   setErrors]   = useState({})
+  const [loading,  setLoading]  = useState(false)
   const [apiError, setApiError] = useState('')
 
-  // Pre-fill when editing
   useEffect(() => {
     if (initialData) {
       setForm({
         name:        initialData.name        ?? '',
         ip_address:  initialData.ip_address  ?? '',
-        type:        initialData.type        ?? 'server',
+        type:        initialData.type        ?? 'other',
         location:    initialData.location    ?? '',
         description: initialData.description ?? '',
       })
@@ -51,11 +46,10 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
   }, [initialData])
 
   const set = (field) => (e) => {
-    setForm((f) => ({ ...f, [field]: e.target.value }))
-    setErrors((err) => ({ ...err, [field]: '' })) // clear field error on change
+    setForm(f => ({ ...f, [field]: e.target.value }))
+    setErrors(err => ({ ...err, [field]: '' }))
   }
 
-  // Client-side validation
   const validate = () => {
     const e = {}
     if (!form.name.trim())       e.name       = 'Device name is required.'
@@ -69,33 +63,30 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
   const handleSubmit = async (e) => {
     e.preventDefault()
     setApiError('')
-    const validationErrors = validate()
-    if (Object.keys(validationErrors).length) {
-      setErrors(validationErrors)
-      return
-    }
+    const errs = validate()
+    if (Object.keys(errs).length) { setErrors(errs); return }
     setLoading(true)
     try {
       await onSubmit(form)
     } catch (err) {
-      // Laravel validation errors come as { errors: { field: [msg] } }
       const laravelErrors = err?.response?.data?.errors
       if (laravelErrors) {
         const mapped = {}
         Object.entries(laravelErrors).forEach(([k, v]) => { mapped[k] = v[0] })
         setErrors(mapped)
       } else {
-        setApiError(err?.response?.data?.message ?? 'Something went wrong. Please try again.')
+        setApiError(err?.response?.data?.message ?? 'Something went wrong.')
       }
     } finally {
       setLoading(false)
     }
   }
 
+  // Group types for display
+  const groups = [...new Set(DEVICE_TYPES.map(t => t.group))]
+
   return (
     <form onSubmit={handleSubmit} noValidate>
-
-      {/* API-level error banner */}
       {apiError && (
         <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
           {apiError}
@@ -103,75 +94,66 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
       )}
 
       <div className="space-y-4">
-
-        {/* Name */}
         <Input
           label="Device name *"
-          placeholder="e.g. Core Router 01"
+          placeholder="e.g. John's iPhone"
           value={form.name}
           onChange={set('name')}
           error={errors.name}
           autoFocus
         />
 
-        {/* IP + Type — side by side */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="IP address *"
-            placeholder="192.168.1.1"
+            placeholder="192.168.1.55"
             value={form.ip_address}
             onChange={set('ip_address')}
             error={errors.ip_address}
             className="font-mono"
           />
 
-          <Select
-            label="Device type *"
-            value={form.type}
-            onChange={set('type')}
-            error={errors.type}
-          >
-            {DEVICE_TYPES.map(({ value, label }) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </Select>
+          {/* Grouped select */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Device type *</label>
+            <select
+              value={form.type}
+              onChange={set('type')}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            >
+              {groups.map(group => (
+                <optgroup key={group} label={`── ${group}`}>
+                  {DEVICE_TYPES.filter(t => t.group === group).map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Location */}
         <Input
           label="Location"
-          placeholder="e.g. Server Room A, Floor 2"
+          placeholder="e.g. Living Room, Bedroom"
           value={form.location}
           onChange={set('location')}
           error={errors.location}
         />
 
-        {/* Description */}
         <Textarea
           label="Description"
-          placeholder="Optional notes about this device…"
+          placeholder="Optional notes…"
           value={form.description}
           onChange={set('description')}
-          error={errors.description}
-          rows={3}
+          rows={2}
         />
       </div>
 
-      {/* Form actions */}
       <div className="flex gap-3 mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
-        <Button
-          type="submit"
-          loading={loading}
-          className="flex-1 justify-center"
-        >
+        <Button type="submit" loading={loading} className="flex-1 justify-center">
           {submitLabel}
         </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onCancel}
-          disabled={loading}
-        >
+        <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
       </div>

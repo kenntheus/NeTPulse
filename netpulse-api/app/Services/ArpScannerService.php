@@ -285,37 +285,65 @@ class ArpScannerService
     /**
      * Guess device type from manufacturer name and IP position.
      */
-    private function guessDeviceType(string $manufacturer = null, string $ip = ''): string
+    private function guessDeviceType(?string $manufacturer = null, string $ip = ''): string
     {
         if (!$manufacturer) return 'other';
 
         $m = strtolower($manufacturer);
 
-        // Phones / tablets
-        if (str_contains($m, 'apple'))                                      return 'other'; // iPhone/iPad
-        if (str_contains($m, 'samsung') || str_contains($m, 'huawei'))     return 'other'; // Android phone
-        if (str_contains($m, 'xiaomi') || str_contains($m, 'oppo'))        return 'other';
+        // ── Phones ────────────────────────────────────────────────────────
+        if (str_contains($m, 'apple'))                                       return 'phone';  // iPhone or iPad
+        if (str_contains($m, 'samsung'))                                     return 'phone';  // Galaxy phone/tablet
+        if (str_contains($m, 'huawei') || str_contains($m, 'honor'))        return 'phone';
+        if (str_contains($m, 'xiaomi') || str_contains($m, 'oppo'))         return 'phone';
+        if (str_contains($m, 'vivo')   || str_contains($m, 'realme'))       return 'phone';
+        if (str_contains($m, 'oneplus') || str_contains($m, 'motorola'))    return 'phone';
 
-        // Network equipment
-        if (str_contains($m, 'tp-link') || str_contains($m, 'netgear'))    return 'router';
-        if (str_contains($m, 'cisco') || str_contains($m, 'ubiquiti'))     return 'switch';
-        if (str_contains($m, 'ruckus') || str_contains($m, 'aruba'))       return 'ap';
+        // ── Tablets ───────────────────────────────────────────────────────
+        // (Apple tablets share MAC range with iPhones, handled above)
+        if (str_contains($m, 'amazon'))                                      return 'tablet'; // Kindle Fire
 
-        // Computers
-        if (str_contains($m, 'intel') || str_contains($m, 'realtek'))      return 'server';
-        if (str_contains($m, 'dell') || str_contains($m, 'lenovo'))        return 'server';
-        if (str_contains($m, 'hp') || str_contains($m, 'asus'))            return 'server';
+        // ── Laptops ───────────────────────────────────────────────────────
+        if (str_contains($m, 'lenovo'))                                      return 'laptop';
+        if (str_contains($m, 'dell'))                                        return 'laptop';
+        if (str_contains($m, 'hewlett') || str_contains($m, 'hp inc'))      return 'laptop';
+        if (str_contains($m, 'acer'))                                        return 'laptop';
+        if (str_contains($m, 'toshiba') || str_contains($m, 'fujitsu'))     return 'laptop';
 
-        // Smart home / TV
-        if (str_contains($m, 'sony') || str_contains($m, 'lg electronics')) return 'other';
-        if (str_contains($m, 'amazon') || str_contains($m, 'google'))       return 'other';
+        // ── Desktop PCs ───────────────────────────────────────────────────
+        if (str_contains($m, 'intel'))                                       return 'pc';     // Intel NIC = desktop
+        if (str_contains($m, 'realtek'))                                     return 'pc';     // Realtek NIC = desktop
+        if (str_contains($m, 'asustek') || str_contains($m, 'asus'))        return 'pc';
+
+        // ── Network equipment ─────────────────────────────────────────────
+        if (str_contains($m, 'tp-link') || str_contains($m, 'netgear'))     return 'router';
+        if (str_contains($m, 'd-link')  || str_contains($m, 'linksys'))     return 'router';
+        if (str_contains($m, 'cisco')   || str_contains($m, 'mikrotik'))    return 'switch';
+        if (str_contains($m, 'ubiquiti') || str_contains($m, 'unifi'))      return 'ap';
+        if (str_contains($m, 'ruckus')  || str_contains($m, 'aruba'))       return 'ap';
+
+        // ── CCTV / Cameras ────────────────────────────────────────────────
+        if (str_contains($m, 'hikvision') || str_contains($m, 'dahua'))     return 'cctv';
+        if (str_contains($m, 'axis'))                                        return 'cctv';
+        if (str_contains($m, 'hanwha') || str_contains($m, 'uniview'))      return 'cctv';
+
+        // ── Printers ──────────────────────────────────────────────────────
+        if (str_contains($m, 'epson') || str_contains($m, 'canon'))         return 'printer';
+        if (str_contains($m, 'brother') || str_contains($m, 'xerox'))       return 'printer';
+        if (str_contains($m, 'lexmark') || str_contains($m, 'ricoh'))       return 'printer';
+
+        // ── Smart TVs ─────────────────────────────────────────────────────
+        if (str_contains($m, 'sony'))                                        return 'smarttv';
+        if (str_contains($m, 'lg electronics'))                              return 'smarttv';
+        if (str_contains($m, 'tcl')  || str_contains($m, 'hisense'))        return 'smarttv';
+        if (str_contains($m, 'roku') || str_contains($m, 'chromecast'))     return 'smarttv';
+
+        // ── Google / Smart home ───────────────────────────────────────────
+        if (str_contains($m, 'google'))                                      return 'other';  // Nest, Chromecast, etc.
 
         return 'other';
     }
-
-    /**
-     * Generate a friendly device name.
-     */
+    
     private function generateName(string $manufacturer = null, string $ip = '', string $type = 'other'): string
     {
         $lastOctet = explode('.', $ip)[3] ?? '?';
