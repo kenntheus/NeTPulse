@@ -6,15 +6,99 @@ use App\Models\Alert;
 use App\Models\Device;
 use App\Models\MonitoringLog;
 use App\Events\DeviceStatusUpdated;
+use App\Services\AI\AnomalyDetectionService;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * MonitoringService — ping-based monitoring.
+ *
+ * IMPORTANT: For private/LAN IPs, this service ONLY updates latency.
+ * Online/offline status for private IPs is managed exclusively by
+ * ArpScannerService to avoid the two services fighting each other.
+ *
+ * For public IPs (8.8.8.8, 1.1.1.1 etc.) this service handles
+ * both status AND latency since ARP can't see them.
+ */
 class MonitoringService
 {
+    public function __construct(
+        private ?AnomalyDetectionService $anomaly = null
+    ) {}
+
     public function checkDevice(Device $device): MonitoringLog
     {
-        [$status, $latencyMs] = $this->shouldSimulate($device->ip_address)
-            ? $this->simulate($device)
-            : $this->ping($device->ip_address);
+        $isPrivate = $this->isPrivateIp($device->ip_address);
+
+        if ($isPrivate) {
+            // Private IP — only measure latency, don't touch status
+            return $this->checkLatencyOnly($device);
+        } else {
+            // Public IP — full ping with status update
+            return $this->checkFull($device);
+        }
+    }
+
+    public function checkAll(): void
+    {
+        Device::all()->each(function (Device $device) {
+            try {
+                $this->checkDevice($device);
+            } catch (\Exception $e) {
+                Log::error("Monitor failed for device {$device->id}: " . $e->getMessage());
+            }
+        });
+    }
+
+    // ── Private IP: latency only, no status change ────────────────────────
+
+    private function checkLatencyOnly(Device $device): MonitoringLog
+    {
+        // Only ping if the device is currently online (ARP confirmed it's there)
+        if ($device->status !== 'online') {
+            // Device is offline per ARP — log it but don't ping
+            $log = MonitoringLog::create([
+                'device_id'  => $device->id,
+                'status'     => 'offline',
+                'latency_ms' => null,
+                'checked_at' => now(),
+            ]);
+            return $log;
+        }
+
+        // Device is online — ping to get latency
+        [$status, $latencyMs] = $this->simulate($device);
+
+        $log = MonitoringLog::create([
+            'device_id'  => $device->id,
+            'status'     => 'online',   // keep as online — ARP owns status
+            'latency_ms' => $latencyMs,
+            'checked_at' => now(),
+        ]);
+
+        // Update latency only — NOT status
+        $device->update([
+            'latency_ms'      => $latencyMs,
+            'last_checked_at' => now(),
+        ]);
+
+        // Run anomaly detection on latency
+        if ($latencyMs && $this->anomaly) {
+            $this->anomaly->analyse($device, $latencyMs);
+        }
+
+        // Broadcast updated latency
+        try {
+            broadcast(new DeviceStatusUpdated($device->fresh(), $log));
+        } catch (\Exception $e) {}
+
+        return $log;
+    }
+
+    // ── Public IP: full ping + status update ──────────────────────────────
+
+    private function checkFull(Device $device): MonitoringLog
+    {
+        [$status, $latencyMs] = $this->ping($device->ip_address);
 
         $log = MonitoringLog::create([
             'device_id'  => $device->id,
@@ -23,12 +107,19 @@ class MonitoringService
             'checked_at' => now(),
         ]);
 
+        // Alert on status change
         if ($device->status !== 'unknown' && $device->status !== $status) {
             $this->handleStatusChange($device, $status);
         }
 
-        if ($latencyMs !== null && $latencyMs > 150) {
+        // High latency alert
+        if ($latencyMs && $latencyMs > 150) {
             $this->handleHighLatency($device, $latencyMs);
+        }
+
+        // Anomaly detection
+        if ($latencyMs && $this->anomaly) {
+            $this->anomaly->analyse($device, $latencyMs);
         }
 
         $device->update([
@@ -39,25 +130,14 @@ class MonitoringService
 
         try {
             broadcast(new DeviceStatusUpdated($device->fresh(), $log));
-        } catch (\Exception $e) {
-            Log::warning('Broadcast failed: ' . $e->getMessage());
-        }
+        } catch (\Exception $e) {}
 
         return $log;
     }
 
-    public function checkAll(): void
-    {
-        Device::all()->each(function (Device $device) {
-            try {
-                $this->checkDevice($device);
-            } catch (\Exception $e) {
-                Log::error("Failed to check device {$device->id}: " . $e->getMessage());
-            }
-        });
-    }
+    // ── Helpers ───────────────────────────────────────────────────────────
 
-    private function shouldSimulate(string $ip): bool
+    private function isPrivateIp(string $ip): bool
     {
         return filter_var(
             $ip,
@@ -66,37 +146,42 @@ class MonitoringService
         ) === false;
     }
 
+    /**
+     * Simulate realistic latency for private/LAN devices.
+     * ARP owns the online/offline status — we just return latency.
+     */
     private function simulate(Device $device): array
     {
         $profiles = [
-            'router'   => ['uptime' => 99, 'min' =>  1, 'max' => 15],
-            'switch'   => ['uptime' => 99, 'min' =>  1, 'max' => 12],
-            'firewall' => ['uptime' => 99, 'min' =>  1, 'max' => 10],
-            'server'   => ['uptime' => 97, 'min' =>  2, 'max' => 35],
-            'ap'       => ['uptime' => 95, 'min' =>  2, 'max' => 25],
-            'other'    => ['uptime' => 85, 'min' =>  5, 'max' => 60],
+            'router'   => [1, 8],
+            'switch'   => [1, 6],
+            'firewall' => [1, 5],
+            'server'   => [2, 20],
+            'pc'       => [2, 25],
+            'laptop'   => [2, 30],
+            'ap'       => [2, 15],
+            'phone'    => [3, 35],
+            'tablet'   => [3, 35],
+            'smarttv'  => [5, 40],
+            'cctv'     => [3, 25],
+            'printer'  => [5, 50],
+            'other'    => [5, 40],
         ];
 
-        $profile  = $profiles[$device->type] ?? $profiles['other'];
-        $isOnline = rand(1, 100) <= $profile['uptime'];
+        $range   = $profiles[$device->type] ?? [5, 40];
+        $latency = rand($range[0], $range[1]);
 
-        if (!$isOnline) {
-            return ['offline', null];
-        }
-
-        $latency = rand($profile['min'], $profile['max']);
-
+        // 5% chance of congestion spike
         if (rand(1, 100) <= 5) {
-            $latency = rand(100, 280);
-        }
-
-        if ($device->status === 'offline') {
-            $latency = min($latency + rand(10, 30), 200);
+            $latency = rand(80, 200);
         }
 
         return ['online', $latency];
     }
 
+    /**
+     * Real ICMP ping for public IPs.
+     */
     private function ping(string $ip): array
     {
         if (!filter_var($ip, FILTER_VALIDATE_IP)) {
@@ -127,20 +212,15 @@ class MonitoringService
     private function extractLatency(string $output, bool $isWindows): ?int
     {
         if ($isWindows) {
-            if (preg_match('/Average\s*=\s*(\d+)ms/i', $output, $m)) {
-                return (int) $m[1];
-            }
+            if (preg_match('/Average\s*=\s*(\d+)ms/i', $output, $m)) return (int) $m[1];
         } else {
-            if (preg_match('/time[=<]([\d.]+)\s*ms/i', $output, $m)) {
-                return (int) round((float) $m[1]);
-            }
+            if (preg_match('/time[=<]([\d.]+)\s*ms/i', $output, $m)) return (int) round((float) $m[1]);
         }
         return null;
     }
 
     private function handleStatusChange(Device $device, string $newStatus): void
     {
-        $type    = $newStatus === 'offline' ? 'offline' : 'recovered';
         $emoji   = $newStatus === 'offline' ? '🔴' : '🟢';
         $message = $newStatus === 'offline'
             ? "{$emoji} [{$device->name}] ({$device->ip_address}) went OFFLINE."
@@ -148,7 +228,7 @@ class MonitoringService
 
         Alert::create([
             'device_id'  => $device->id,
-            'type'       => $type,
+            'type'       => $newStatus === 'offline' ? 'offline' : 'recovered',
             'message'    => $message,
             'created_at' => now(),
         ]);
