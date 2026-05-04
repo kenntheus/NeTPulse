@@ -70,19 +70,6 @@ cd netpulse-ui
 npm install
 npm run dev
 ```
-
----
-
-## 🔑 Demo Accounts
-
-* **Admin**
-  Email: [admin@netpulse.dev](mailto:admin@netpulse.dev)
-  Password: password
-
-* **Viewer**
-  Email: [viewer@netpulse.dev](mailto:viewer@netpulse.dev)
-  Password: password
-
 ---
 
 <div align="center">
