@@ -18,7 +18,6 @@ class AiController extends Controller
         private NetworkAssistantService  $assistant,
     ) {}
 
-    /** GET /api/ai/insights — all AI data in one call */
     public function insights(): JsonResponse
     {
         return response()->json([
@@ -28,19 +27,16 @@ class AiController extends Controller
         ]);
     }
 
-    /** GET /api/ai/anomalies */
     public function anomalies(): JsonResponse
     {
         return response()->json($this->anomaly->getAllBaselines());
     }
 
-    /** GET /api/ai/fingerprints */
     public function fingerprints(): JsonResponse
     {
         return response()->json($this->fingerprint->fingerprintAll());
     }
 
-    /** POST /api/ai/chat */
     public function chat(Request $request): JsonResponse
     {
         $request->validate([

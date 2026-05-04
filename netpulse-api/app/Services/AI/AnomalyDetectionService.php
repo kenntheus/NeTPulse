@@ -7,15 +7,6 @@ use App\Models\Device;
 use App\Models\MonitoringLog;
 use Illuminate\Support\Facades\Log;
 
-/**
- * AnomalyDetectionService
- *
- * Learns each device's normal latency using a rolling window of last 100 samples.
- * Flags anomalies using Z-score analysis:
- *   Z = (current - mean) / stddev
- *   Z > 2.5  → latency spike
- *   Z < -1.5 → suspiciously fast (possible ARP spoofing)
- */
 class AnomalyDetectionService
 {
     private const WINDOW_SIZE   = 100;

@@ -11,13 +11,6 @@ use Illuminate\Support\Facades\Http;
 
 class ArpScannerService
 {
-    /**
-     * Run a full ARP scan:
-     * 1. Parse the system ARP table
-     * 2. Auto-create any new devices found
-     * 3. Update online/offline status for all LAN devices
-     * 4. Return summary of what was found
-     */
     public function scan(): array
     {
         $arpEntries = $this->parseArpTable();
@@ -32,25 +25,20 @@ class ArpScannerService
         foreach ($arpEntries as $entry) {
             $ip  = $entry['ip'];
             $mac = $entry['mac'];
-
-            // Skip invalid/broadcast entries
             if ($this->shouldSkip($ip, $mac)) continue;
 
-            // Auto-create device if not already tracked
             $isNew = !Device::where('ip_address', $ip)->exists();
             if ($isNew) {
                 $this->autoCreateDevice($ip, $mac);
                 $newDevices++;
             }
 
-            // Update status for this device
             $device = Device::where('ip_address', $ip)->first();
             if ($device) {
                 $this->updateDeviceOnline($device, $mac);
             }
         }
 
-        // Mark LAN devices NOT in the ARP table as offline
         $this->markMissingDevicesOffline($arpEntries);
 
         Log::info("[ARP] Scan complete. Found: " . count($arpEntries) . " entries. New devices: {$newDevices}");
@@ -62,12 +50,6 @@ class ArpScannerService
         ];
     }
 
-    // ── ARP Table Parsing ─────────────────────────────────────────────────
-
-    /**
-     * Parse the system ARP table.
-     * Works on Windows (arp -a) and Linux/Mac (arp -a or ip neigh).
-     */
     private function parseArpTable(): array
     {
         $isWindows = PHP_OS_FAMILY === 'Windows';
@@ -78,14 +60,6 @@ class ArpScannerService
             : $this->parseUnixArp($output);
     }
 
-    /**
-     * Parse Windows `arp -a` output:
-     *
-     * Interface: 192.168.1.100 --- 0x5
-     *   Internet Address      Physical Address      Type
-     *   192.168.1.1           aa-bb-cc-dd-ee-ff     dynamic
-     *   192.168.1.50          11-22-33-44-55-66     dynamic
-     */
     private function parseWindowsArp(string $output): array
     {
         $entries = [];
@@ -93,13 +67,8 @@ class ArpScannerService
 
         foreach ($lines as $line) {
             $line = trim($line);
-
-            // Match lines like: "  192.168.1.1    aa-bb-cc-dd-ee-ff    dynamic"
             if (preg_match('/^(\d{1,3}(?:\.\d{1,3}){3})\s+([\da-fA-F]{2}[-:][\da-fA-F]{2}[-:][\da-fA-F]{2}[-:][\da-fA-F]{2}[-:][\da-fA-F]{2}[-:][\da-fA-F]{2})\s+(\w+)/', $line, $m)) {
                 $type = strtolower($m[3]);
-
-                // Only include dynamic entries (actual connected devices)
-                // Skip static entries which are usually system entries
                 if ($type === 'dynamic') {
                     $entries[] = [
                         'ip'  => $m[1],
@@ -113,12 +82,6 @@ class ArpScannerService
         return $entries;
     }
 
-    /**
-     * Parse Unix `arp -a` output:
-     *
-     * router.local (192.168.1.1) at aa:bb:cc:dd:ee:ff [ether] on eth0
-     * ? (192.168.1.50) at 11:22:33:44:55:66 [ether] on eth0
-     */
     private function parseUnixArp(string $output): array
     {
         $entries = [];
@@ -140,12 +103,6 @@ class ArpScannerService
         return $entries;
     }
 
-    // ── Device Management ─────────────────────────────────────────────────
-
-    /**
-     * Auto-create a new device when discovered by ARP scanner.
-     * Looks up the manufacturer from the MAC address OUI.
-     */
     private function autoCreateDevice(string $ip, string $mac): void
     {
         $manufacturer = $this->lookupManufacturer($mac);
@@ -161,15 +118,12 @@ class ArpScannerService
                              ($manufacturer ? " | Manufacturer: {$manufacturer}" : ''),
             'status'      => 'online',
             'latency_ms'  => null,
-            'created_by'  => 1, // admin user
+            'created_by'  => 1, 
         ]);
 
         Log::info("[ARP] New device discovered: {$ip} ({$mac}) — {$name}");
     }
 
-    /**
-     * Mark an ARP-discovered device as online.
-     */
     private function updateDeviceOnline(Device $device, string $mac): void
     {
         $wasOffline = $device->status === 'offline';
@@ -177,11 +131,10 @@ class ArpScannerService
         $log = MonitoringLog::create([
             'device_id'  => $device->id,
             'status'     => 'online',
-            'latency_ms' => null, // ARP doesn't give latency — use ping separately
+            'latency_ms' => null,
             'checked_at' => now(),
         ]);
 
-        // Create recovery alert if it was offline
         if ($wasOffline) {
             Alert::create([
                 'device_id'  => $device->id,
@@ -203,17 +156,11 @@ class ArpScannerService
         }
     }
 
-    /**
-     * Mark private-IP devices NOT found in ARP table as offline.
-     * Skips public IPs (those are pinged separately by MonitoringService).
-     */
     private function markMissingDevicesOffline(array $arpEntries): void
     {
         $foundIps = collect($arpEntries)->pluck('ip')->toArray();
 
-        // Get all private-IP devices that are currently online
         Device::where('status', 'online')->get()->each(function (Device $device) use ($foundIps) {
-            // Only process private IPs (LAN devices)
             $isPrivate = filter_var(
                 $device->ip_address,
                 FILTER_VALIDATE_IP,
@@ -251,16 +198,9 @@ class ArpScannerService
         });
     }
 
-    // ── Manufacturer Lookup ───────────────────────────────────────────────
-
-    /**
-     * Look up device manufacturer from MAC address OUI.
-     * Uses macvendors.com free API — falls back gracefully if unavailable.
-     */
     private function lookupManufacturer(string $mac): ?string
     {
         try {
-            // Rate limit: only look up once per MAC (cache in description)
             $existing = Device::where('description', 'like', "%{$mac}%")->first();
             if ($existing) {
                 if (preg_match('/Manufacturer: ([^|]+)/', $existing->description, $m)) {
@@ -268,7 +208,6 @@ class ArpScannerService
                 }
             }
 
-            // Query macvendors.com API (free, no API key needed)
             $oui      = substr(str_replace(':', '', $mac), 0, 6);
             $response = Http::timeout(3)->get("https://api.macvendors.com/{$oui}");
 
@@ -282,9 +221,6 @@ class ArpScannerService
         return null;
     }
 
-    /**
-     * Guess device type from manufacturer name and IP position.
-     */
     private function guessDeviceType(?string $manufacturer = null, string $ip = ''): string
     {
         if (!$manufacturer) return 'other';
@@ -300,7 +236,6 @@ class ArpScannerService
         if (str_contains($m, 'oneplus') || str_contains($m, 'motorola'))    return 'phone';
 
         // ── Tablets ───────────────────────────────────────────────────────
-        // (Apple tablets share MAC range with iPhones, handled above)
         if (str_contains($m, 'amazon'))                                      return 'tablet'; // Kindle Fire
 
         // ── Laptops ───────────────────────────────────────────────────────
@@ -339,7 +274,7 @@ class ArpScannerService
         if (str_contains($m, 'roku') || str_contains($m, 'chromecast'))     return 'smarttv';
 
         // ── Google / Smart home ───────────────────────────────────────────
-        if (str_contains($m, 'google'))                                      return 'other';  // Nest, Chromecast, etc.
+        if (str_contains($m, 'google'))                                      return 'other';
 
         return 'other';
     }
@@ -349,8 +284,7 @@ class ArpScannerService
         $lastOctet = explode('.', $ip)[3] ?? '?';
 
         if ($manufacturer) {
-            // Shorten long manufacturer names
-            $short = explode(' ', $manufacturer)[0]; // e.g. "Apple Inc." → "Apple"
+            $short = explode(' ', $manufacturer)[0];
             return "{$short} Device ({$ip})";
         }
 
@@ -366,22 +300,13 @@ class ArpScannerService
         return ($typeNames[$type] ?? 'Device') . " .{$lastOctet}";
     }
 
-    /**
-     * Skip broadcast, multicast, and invalid entries.
-     */
     private function shouldSkip(string $ip, string $mac): bool
     {
-        // Skip broadcast
         if (str_ends_with($ip, '.255')) return true;
         if ($ip === '255.255.255.255')  return true;
-
-        // Skip multicast MAC range
         if (str_starts_with($mac, '01:') || str_starts_with($mac, 'ff:')) return true;
-
-        // Skip invalid MACs
         if ($mac === '00:00:00:00:00:00') return true;
 
-        // Skip non-private IPs (public IPs handled by MonitoringService)
         $isPrivate = filter_var(
             $ip,
             FILTER_VALIDATE_IP,

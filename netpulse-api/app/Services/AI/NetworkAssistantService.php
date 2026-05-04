@@ -8,17 +8,6 @@ use App\Models\MonitoringLog;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-/**
- * NetworkAssistantService
- *
- * Powers the Claude AI chat assistant with real network context.
- * Injects live device data, recent alerts, and anomaly baselines
- * into each Claude API call so answers are grounded in real numbers.
- *
- * Resume talking point:
- *   "Integrated Claude AI assistant with real-time network context
- *    injection for intelligent network health analysis"
- */
 class NetworkAssistantService
 {
     public function __construct(
@@ -26,10 +15,6 @@ class NetworkAssistantService
         private DeviceFingerprintService $fingerprint,
     ) {}
 
-    /**
-     * Send a user message to Claude with full network context injected.
-     * Returns Claude's response as a string.
-     */
     public function chat(string $userMessage, array $history = []): string
     {
         $apiKey = config('services.anthropic.key');
@@ -67,11 +52,6 @@ class NetworkAssistantService
         }
     }
 
-    // ── Context building ──────────────────────────────────────────────────
-
-    /**
-     * Build the system prompt with real network data injected.
-     */
     private function buildSystemPrompt(): string
     {
         $devices      = Device::all();
@@ -83,19 +63,16 @@ class NetworkAssistantService
             ->get();
         $anomalies    = $this->anomaly->getAllBaselines();
 
-        // Build device summary
         $deviceLines = $devices->map(fn($d) =>
             "  - {$d->name} ({$d->ip_address}) | Type: {$d->type} | Status: {$d->status}" .
             ($d->latency_ms ? " | Latency: {$d->latency_ms}ms" : "") .
             ($d->location ? " | Location: {$d->location}" : "")
         )->join("\n");
 
-        // Build alert summary
         $alertLines = $recentAlerts->map(fn($a) =>
             "  - [{$a->created_at->diffForHumans()}] {$a->message}"
         )->join("\n");
 
-        // Build anomaly summary
         $anomalyLines = collect($anomalies)->map(fn($b) =>
             "  - {$b['device_name']}: avg={$b['mean']}ms, stddev={$b['stddev']}ms, samples={$b['count']}"
         )->join("\n");

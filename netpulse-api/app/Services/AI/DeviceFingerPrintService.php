@@ -5,33 +5,13 @@ namespace App\Services\AI;
 use App\Models\Device;
 use App\Models\MonitoringLog;
 
-/**
- * DeviceFingerprintService
- *
- * Classifies devices based on behavioural patterns from monitoring logs:
- *
- *   - Uptime pattern  → is it always on? does it sleep at night?
- *   - Active hours    → when is it most often online?
- *   - Response pattern → consistent latency = infrastructure, variable = user device
- *   - Offline pattern  → regular sleep schedule = phone/laptop
- *
- * Resume talking point:
- *   "Built a behavioural device classifier using activity pattern analysis
- *    on time-series monitoring data without requiring ML libraries"
- */
 class DeviceFingerprintService
 {
-    /**
-     * Analyse all devices and return fingerprint profiles.
-     */
     public function fingerprintAll(): array
     {
         return Device::all()->map(fn($d) => $this->fingerprint($d))->toArray();
     }
 
-    /**
-     * Build a behavioural fingerprint for one device.
-     */
     public function fingerprint(Device $device): array
     {
         $logs = MonitoringLog::where('device_id', $device->id)
@@ -47,23 +27,13 @@ class DeviceFingerprintService
         $onlineLogs   = $logs->where('status', 'online');
         $offlineLogs  = $logs->where('status', 'offline');
         $uptimePct    = round(($onlineLogs->count() / $totalChecks) * 100, 1);
-
-        // Latency stats
         $latencies    = $onlineLogs->pluck('latency_ms')->filter()->values();
         $avgLatency   = $latencies->count() ? round($latencies->avg(), 1) : null;
         $latencyStd   = $this->stddev($latencies->toArray());
-
-        // Active hours — which hours of day is device most online?
         $activeHours  = $this->getActiveHours($onlineLogs);
         $peakHour     = $activeHours ? array_search(max($activeHours), $activeHours) : null;
-
-        // Sleep pattern — does it go offline regularly at night?
         $hasSleepPattern = $this->detectSleepPattern($logs);
-
-        // Behaviour classification
         $behaviour = $this->classifyBehaviour($uptimePct, $avgLatency, $latencyStd, $hasSleepPattern);
-
-        // Suggested device type based on behaviour
         $suggestedType = $this->suggestType($behaviour, $device->type);
 
         return [
@@ -84,8 +54,6 @@ class DeviceFingerprintService
         ];
     }
 
-    // ── Analysis helpers ──────────────────────────────────────────────────
-
     private function getActiveHours($onlineLogs): array
     {
         $hours = array_fill(0, 24, 0);
@@ -96,10 +64,6 @@ class DeviceFingerprintService
         return $hours;
     }
 
-    /**
-     * Detect if device has a regular sleep schedule (e.g. phone at night).
-     * Looks for consistent offline periods between 11pm and 7am.
-     */
     private function detectSleepPattern($logs): bool
     {
         $nightOffline = 0;
@@ -115,40 +79,31 @@ class DeviceFingerprintService
 
         if ($nightTotal < 10) return false;
 
-        // If >60% of night checks are offline → sleep pattern
         return ($nightOffline / $nightTotal) > 0.6;
     }
 
-    /**
-     * Classify device behaviour from metrics.
-     */
     private function classifyBehaviour(
         float  $uptime,
         ?float $avgLatency,
         float  $latencyStd,
         bool   $sleeps
     ): string {
-        // Always-on + very low/stable latency = infrastructure (router, switch, server)
         if ($uptime >= 98 && $avgLatency !== null && $avgLatency < 20 && $latencyStd < 5) {
             return 'infrastructure';
         }
 
-        // Always-on + higher latency = server/NAS
         if ($uptime >= 95 && $avgLatency !== null && $avgLatency >= 20) {
             return 'server';
         }
 
-        // Sleeps at night + variable uptime = phone/laptop
         if ($sleeps && $uptime < 90) {
             return 'personal_device';
         }
 
-        // High variability + moderate uptime = user device
         if ($latencyStd > 15 && $uptime < 95) {
             return 'personal_device';
         }
 
-        // Moderate uptime, no sleep = smart home device
         if ($uptime >= 80 && $uptime < 98 && !$sleeps) {
             return 'smart_home';
         }

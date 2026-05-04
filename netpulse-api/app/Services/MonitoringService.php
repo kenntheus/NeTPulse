@@ -10,8 +10,6 @@ use Illuminate\Support\Facades\Log;
 
 class MonitoringService
 {
-    // ── Public API ────────────────────────────────────────────────────────
-
     public function checkDevice(Device $device): MonitoringLog
     {
         [$status, $latencyMs] = $this->shouldSimulate($device->ip_address)
@@ -59,12 +57,6 @@ class MonitoringService
         });
     }
 
-    // ── Simulation ────────────────────────────────────────────────────────
-
-    /**
-     * Private/RFC-1918 IPs = simulate (home LAN, unreachable remotely).
-     * Public IPs = real ping.
-     */
     private function shouldSimulate(string $ip): bool
     {
         return filter_var(
@@ -74,18 +66,6 @@ class MonitoringService
         ) === false;
     }
 
-    /**
-     * Simulate realistic ping behaviour per device type.
-     *
-     * Uptime %  |  Latency range  |  Device types
-     * ----------|-----------------|------------------
-     *    99%    |   1 – 15 ms     |  router, switch, firewall
-     *    97%    |   2 – 35 ms     |  server
-     *    95%    |   2 – 25 ms     |  ap (access point)
-     *    85%    |   5 – 60 ms     |  other (phones, TVs, printers)
-     *
-     * 5% chance of a congestion spike (100–280 ms) on any online device.
-     */
     private function simulate(Device $device): array
     {
         $profiles = [
@@ -106,20 +86,16 @@ class MonitoringService
 
         $latency = rand($profile['min'], $profile['max']);
 
-        // 5% chance of congestion spike
         if (rand(1, 100) <= 5) {
             $latency = rand(100, 280);
         }
 
-        // Slightly higher latency after recovery
         if ($device->status === 'offline') {
             $latency = min($latency + rand(10, 30), 200);
         }
 
         return ['online', $latency];
     }
-
-    // ── Real Ping ─────────────────────────────────────────────────────────
 
     private function ping(string $ip): array
     {
@@ -161,8 +137,6 @@ class MonitoringService
         }
         return null;
     }
-
-    // ── Alerts ────────────────────────────────────────────────────────────
 
     private function handleStatusChange(Device $device, string $newStatus): void
     {
