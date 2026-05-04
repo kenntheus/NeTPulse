@@ -1,20 +1,20 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './store/AuthContext'
-import AppLayout from './components/layout/AppLayout'
-import Login     from './pages/Login'
-import Register  from './pages/Register'
-import Dashboard from './pages/Dashboard'
-import Devices   from './pages/Devices'
-import Logs      from './pages/Logs'
-import Alerts    from './pages/Alerts'
+import AppLayout  from './components/layout/AppLayout'
+import Login      from './pages/Login'
+import Register   from './pages/Register'
+import Dashboard  from './pages/Dashboard'
+import Devices    from './pages/Devices'
+import Logs       from './pages/Logs'
+import Alerts     from './pages/Alerts'
+import AiInsights from './pages/AiInsights'
+import NotFound   from './pages/NotFound'
 
-// Redirect to login if not authenticated
 function ProtectedRoute({ children }) {
   const { user } = useAuth()
   return user ? children : <Navigate to="/login" replace />
 }
 
-// Redirect to dashboard if already logged in
 function GuestRoute({ children }) {
   const { user } = useAuth()
   return !user ? children : <Navigate to="/" replace />
@@ -25,13 +25,16 @@ function AppRoutes() {
     <Routes>
       <Route path="/login"    element={<GuestRoute><Login /></GuestRoute>} />
       <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
+
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-        <Route path="/"        element={<Dashboard />} />
-        <Route path="/devices" element={<Devices />} />
-        <Route path="/logs"    element={<Logs />} />
-        <Route path="/alerts"  element={<Alerts />} />
+        <Route path="/"          element={<Dashboard />} />
+        <Route path="/devices"   element={<Devices />} />
+        <Route path="/logs"      element={<Logs />} />
+        <Route path="/alerts"    element={<Alerts />} />
+        <Route path="/ai"        element={<AiInsights />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }
