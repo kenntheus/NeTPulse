@@ -1,42 +1,67 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState } from 'react'
 import api from '../lib/api'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(() => {
-    const stored = localStorage.getItem('netpulse_user')
-    return stored ? JSON.parse(stored) : null
+    try {
+      const stored = localStorage.getItem('netpulse_user')
+      return stored ? JSON.parse(stored) : null
+    } catch (_) { return null }
   })
   const [loading, setLoading] = useState(false)
 
+  /**
+   * Login — returns:
+   *   { success: true }                      → logged in, navigate to /
+   *   { requires_verification: true, email } → show verify notice
+   *   { success: false, message }            → show error
+   */
   const login = async (email, password) => {
     setLoading(true)
     try {
       const { data } = await api.post('/auth/login', { email, password })
+
+      // Needs email verification
+      if (data.requires_verification) {
+        return { requires_verification: true, email: data.email }
+      }
+
+      // Success — token returned directly
       localStorage.setItem('netpulse_token', data.token)
       localStorage.setItem('netpulse_user',  JSON.stringify(data.user))
       setUser(data.user)
       return { success: true }
+
     } catch (err) {
-      return { success: false, message: err.response?.data?.message || 'Login failed' }
+      const msg = err.response?.data?.errors?.email?.[0]
+        ?? err.response?.data?.message
+        ?? 'Login failed. Please try again.'
+      return { success: false, message: msg }
     } finally {
       setLoading(false)
     }
   }
 
+  /**
+   * Register — backend sends verification email.
+   * Returns { success: true } so Register page shows the "check email" screen.
+   */
   const register = async (name, email, password, password_confirmation) => {
     setLoading(true)
     try {
-      const { data } = await api.post('/auth/register', { name, email, password, password_confirmation })
-      localStorage.setItem('netpulse_token', data.token)
-      localStorage.setItem('netpulse_user',  JSON.stringify(data.user))
-      setUser(data.user)
-      return { success: true }
+      const { data } = await api.post('/auth/register', {
+        name, email, password, password_confirmation,
+      })
+      return { success: true, devVerifyUrl: data.dev_verify_url }
     } catch (err) {
       const errors = err.response?.data?.errors
-      const first  = errors ? Object.values(errors)[0]?.[0] : 'Registration failed'
-      return { success: false, message: first }
+      const first  = errors ? Object.values(errors)[0]?.[0] : null
+      return {
+        success: false,
+        message: first ?? err.response?.data?.message ?? 'Registration failed.',
+      }
     } finally {
       setLoading(false)
     }

@@ -9,13 +9,18 @@ use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\MonitoringLogController;
 use Illuminate\Support\Facades\Route;
 
-// ── Public ────────────────────────────────────────────────────────────────────
+// ── Public auth routes ────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login',    [AuthController::class, 'login']);
+    Route::post('/register',            [AuthController::class, 'register']);
+    Route::post('/login',               [AuthController::class, 'login']);
+    Route::post('/resend-verification', [AuthController::class, 'resendVerification']);
+
+    // Signed URL — called when user clicks link in email
+    Route::get('/verify-email', [AuthController::class, 'verifyEmail'])
+        ->name('auth.verify-email');
 });
 
-// ── Protected ─────────────────────────────────────────────────────────────────
+// ── Protected routes ──────────────────────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('auth')->group(function () {
@@ -42,7 +47,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/arp/scan', [ArpScanController::class, 'scan']);
 
-    // ── AI endpoints ──────────────────────────────────────────────────────
     Route::prefix('ai')->group(function () {
         Route::get('/insights',     [AiController::class, 'insights']);
         Route::get('/anomalies',    [AiController::class, 'anomalies']);

@@ -10,34 +10,25 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // ── Users only — no sample devices ───────────────────────────────
-        // Add your real devices via:
-        //   • "Scan Network" button on the Devices page (auto-discovers via ARP)
-        //   • "Add device" button to add manually
-
-        User::firstOrCreate(
+        // Creates ONE admin account — pre-verified so you can log in immediately.
+        // Change this email/password before going to production!
+        $admin = User::firstOrCreate(
             ['email' => 'admin@netpulse.dev'],
             [
-                'name'     => 'Admin User',
-                'password' => Hash::make('password'),
-                'role'     => 'admin',
+                'name'              => 'Admin User',
+                'password'          => Hash::make('Admin@12345!'),
+                'role'              => 'admin',
+                'email_verified_at' => now(), // pre-verified
             ]
         );
 
-        User::firstOrCreate(
-            ['email' => 'viewer@netpulse.dev'],
-            [
-                'name'     => 'John Viewer',
-                'password' => Hash::make('password'),
-                'role'     => 'viewer',
-            ]
-        );
-
-        $this->command->info('✅ Users created.');
+        $this->command->info('✅ Admin account ready.');
         $this->command->info('');
-        $this->command->info('Admin:  admin@netpulse.dev  / password');
-        $this->command->info('Viewer: viewer@netpulse.dev / password');
+        $this->command->info('  Email:    admin@netpulse.dev');
+        $this->command->info('  Password: Admin@12345!');
         $this->command->info('');
-        $this->command->info('💡 Log in as admin and click "Scan Network" to discover devices.');
+        $this->command->warn('  ⚠ Change this password after first login!');
+        $this->command->info('');
+        $this->command->info('  All other users must register and verify their email.');
     }
 }
