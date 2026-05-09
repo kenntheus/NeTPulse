@@ -2,20 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\VerifyEmailMail;
+use App\Mail\VerificationCodeMail;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    // ── Register ──────────────────────────────────────────────────────────
-
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -32,57 +29,71 @@ class AuthController extends Controller
             'email_verified_at' => null,
         ]);
 
-        $this->sendVerificationEmail($user);
+        $code      = $user->generateVerificationCode();
+        $mailError = $this->sendVerificationCode($user, $code);
 
         return response()->json([
-            'message'        => 'Account created! Please check your email to verify your account.',
-            // Dev helper — shows verify URL in response so you can test without real email
-            'dev_verify_url' => app()->isLocal() ? $this->buildVerificationUrl($user) : null,
+            'message'    => 'Account created! Enter the 6-digit code sent to your email.',
+            'email'      => $user->email,
+            'mail_error' => $mailError, // shows actual error in response
+            'dev_code'   => app()->isLocal() ? $code : null, // always show in local
         ], 201);
     }
 
-    // ── Email Verification ────────────────────────────────────────────────
-
-    public function verifyEmail(Request $request): JsonResponse
+    public function verifyCode(Request $request): JsonResponse
     {
-        $user = User::find($request->id);
+        $request->validate([
+            'email' => ['required', 'email'],
+            'code'  => ['required', 'string', 'size:6'],
+        ]);
+
+        $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            return response()->json(['message' => 'Invalid verification link.'], 400);
+            return response()->json(['message' => 'Invalid request.'], 400);
         }
 
-        if (!URL::hasValidSignature($request)) {
-            return response()->json(['message' => 'Verification link has expired. Please request a new one.'], 400);
+        if ($user->isVerified()) {
+            return response()->json(['message' => 'Account already verified. Please log in.']);
         }
 
-        if ($user->email_verified_at) {
-            return response()->json(['message' => 'Email already verified. You can log in.']);
+        if (!$user->verification_code || $user->verification_code_expires_at < now()) {
+            return response()->json([
+                'message' => 'Code has expired. Please request a new one.',
+                'expired' => true,
+            ], 400);
         }
 
-        $user->update(['email_verified_at' => now()]);
+        if ($user->verification_code !== $request->code) {
+            return response()->json([
+                'message' => 'Incorrect code. Please check your email and try again.',
+            ], 400);
+        }
 
-        return response()->json(['message' => 'Email verified! You can now log in.']);
+        $user->clearVerificationCode();
+
+        return response()->json(['message' => 'Email verified! Your account is now active.']);
     }
 
-    public function resendVerification(Request $request): JsonResponse
+    public function resendCode(Request $request): JsonResponse
     {
         $request->validate(['email' => ['required', 'email']]);
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || $user->email_verified_at) {
-            return response()->json(['message' => 'If that email is registered and unverified, a link has been sent.']);
+        if (!$user || $user->isVerified()) {
+            return response()->json(['message' => 'If that email is registered and unverified, a new code has been sent.']);
         }
 
-        $this->sendVerificationEmail($user);
+        $code      = $user->generateVerificationCode();
+        $mailError = $this->sendVerificationCode($user, $code);
 
         return response()->json([
-            'message'        => 'Verification email resent. Check your inbox.',
-            'dev_verify_url' => app()->isLocal() ? $this->buildVerificationUrl($user) : null,
+            'message'    => 'A new code has been sent to your email.',
+            'mail_error' => $mailError,
+            'dev_code'   => app()->isLocal() ? $code : null,
         ]);
     }
-
-    // ── Login (simple — no 2FA) ───────────────────────────────────────────
 
     public function login(Request $request): JsonResponse
     {
@@ -99,18 +110,20 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        // Must verify email first
-        if (!$user->email_verified_at) {
+        if (!$user->isVerified()) {
             Auth::logout();
+            $code      = $user->generateVerificationCode();
+            $mailError = $this->sendVerificationCode($user, $code);
+
             return response()->json([
-                'message'               => 'Please verify your email before logging in.',
+                'message'               => 'Your email is not verified. We sent a new code.',
                 'requires_verification' => true,
                 'email'                 => $user->email,
-                'dev_verify_url'        => app()->isLocal() ? $this->buildVerificationUrl($user) : null,
+                'mail_error'            => $mailError,
+                'dev_code'              => app()->isLocal() ? $code : null,
             ], 403);
         }
 
-        // Issue token directly — no 2FA
         $token = $user->createToken('netpulse-token')->plainTextToken;
 
         return response()->json([
@@ -118,8 +131,6 @@ class AuthController extends Controller
             'token' => $token,
         ]);
     }
-
-    // ── Other ─────────────────────────────────────────────────────────────
 
     public function logout(Request $request): JsonResponse
     {
@@ -134,29 +145,19 @@ class AuthController extends Controller
 
     // ── Private ───────────────────────────────────────────────────────────
 
-    private function sendVerificationEmail(User $user): void
+    /**
+     * Returns null on success, error message string on failure.
+     */
+    private function sendVerificationCode(User $user, string $code): ?string
     {
         try {
-            $url = $this->buildVerificationUrl($user);
-            Mail::to($user->email)->send(new VerifyEmailMail($user->name, $url));
+            Mail::to($user->email)->send(new VerificationCodeMail($user->name, $code));
+            \Log::info("[VerifyCode] Email sent to {$user->email}");
+            return null; // success
         } catch (\Exception $e) {
-            \Log::warning("[Verify] Email failed for {$user->email}: " . $e->getMessage());
+            \Log::error("[VerifyCode] FAILED for {$user->email}: " . $e->getMessage());
+            return $e->getMessage(); // return actual error
         }
-    }
-
-    private function buildVerificationUrl(User $user): string
-    {
-        $apiUrl = URL::temporarySignedRoute(
-            'auth.verify-email',
-            now()->addMinutes(60),
-            ['id' => $user->id]
-        );
-
-        // Point link to frontend, not API
-        $frontendBase = env('FRONTEND_URL', 'http://localhost:5173');
-        $apiBase      = config('app.url');
-
-        return str_replace($apiBase . '/api', $frontendBase, $apiUrl);
     }
 
     private function formatUser(User $user): array
@@ -166,7 +167,7 @@ class AuthController extends Controller
             'name'       => $user->name,
             'email'      => $user->email,
             'role'       => $user->role,
-            'verified'   => (bool) $user->email_verified_at,
+            'verified'   => $user->isVerified(),
             'created_at' => $user->created_at,
         ];
     }

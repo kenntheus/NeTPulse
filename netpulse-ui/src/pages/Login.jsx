@@ -4,6 +4,115 @@ import { useAuth } from '../store/AuthContext'
 import Spinner from '../components/ui/Spinner'
 import api from '../lib/api'
 
+// ── Verify code step (shown when email not yet verified) ──────────────────────
+function VerifyCodeStep({ email, devCode, onVerified, onBack }) {
+  const [code,       setCode]       = useState('')
+  const [error,      setError]      = useState('')
+  const [loading,    setLoading]    = useState(false)
+  const [resending,  setResending]  = useState(false)
+  const [resent,     setResent]     = useState(false)
+  const [newDevCode, setNewDevCode] = useState(null)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (code.length !== 6) { setError('Enter the 6-digit code.'); return }
+    setError('')
+    setLoading(true)
+    try {
+      await api.post('/auth/verify-code', { email, code })
+      onVerified()
+    } catch (err) {
+      setError(err.response?.data?.message ?? 'Invalid code. Try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resend = async () => {
+    setResending(true)
+    setResent(false)
+    try {
+      const { data } = await api.post('/auth/resend-code', { email })
+      setResent(true)
+      if (data.dev_code) setNewDevCode(data.dev_code)
+    } catch (_) { setResent(true) }
+    finally { setResending(false) }
+  }
+
+  const displayCode = newDevCode ?? devCode
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="text-center py-2">
+        <div className="text-4xl mb-3">📧</div>
+        <p className="text-gray-400 text-sm">
+          Your email isn't verified yet. We sent a code to<br />
+          <span className="text-white font-medium">{email}</span>
+        </p>
+      </div>
+
+      {/* Dev mode */}
+      {displayCode && (
+        <div className="bg-amber-900/30 border border-amber-700 rounded-lg p-3 text-center">
+          <p className="text-amber-400 text-xs font-semibold mb-1">🔧 Dev mode — your code:</p>
+          <p className="text-amber-300 text-2xl font-mono font-bold tracking-widest">{displayCode}</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-900/30 border border-red-800 text-red-400 text-sm px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {resent && (
+        <div className="bg-green-900/30 border border-green-800 text-green-400 text-sm px-4 py-3 rounded-lg">
+          ✓ New code sent! Check your email.
+        </div>
+      )}
+
+      <div>
+        <label className="block text-xs font-medium text-gray-400 mb-1.5">Verification code</label>
+        <input
+          type="text"
+          inputMode="numeric"
+          maxLength={6}
+          value={code}
+          onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          placeholder="000000"
+          autoFocus
+          className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-600 rounded-lg px-3 py-3 text-2xl font-mono tracking-[0.5em] text-center focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+        />
+        <p className="text-xs text-gray-500 mt-1 text-center">Code expires in 15 minutes</p>
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading || code.length !== 6}
+        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2.5 text-sm transition-all"
+      >
+        {loading && <Spinner size="sm" />}
+        Verify & Continue
+      </button>
+
+      <div className="flex items-center justify-between text-xs">
+        <button type="button" onClick={onBack} className="text-gray-500 hover:text-gray-300 transition-colors">
+          ← Back to login
+        </button>
+        <button
+          type="button"
+          onClick={resend}
+          disabled={resending}
+          className="text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors"
+        >
+          {resending ? 'Sending…' : 'Resend code'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// ── Main Login page ───────────────────────────────────────────────────────────
 export default function Login() {
   const { login } = useAuth()
   const navigate  = useNavigate()
@@ -12,11 +121,13 @@ export default function Login() {
   const [error,   setError]   = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Needs verification state
-  const [needsVerification, setNeedsVerification] = useState(false)
-  const [verifyEmail,       setVerifyEmail]        = useState('')
-  const [resending,         setResending]           = useState(false)
-  const [resent,            setResent]              = useState(false)
+  // Verification state
+  const [needsVerify, setNeedsVerify] = useState(false)
+  const [verifyEmail, setVerifyEmail] = useState('')
+  const [devCode,     setDevCode]     = useState(null)
+
+  // After successful verification — show success and prompt login
+  const [justVerified, setJustVerified] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -33,7 +144,8 @@ export default function Login() {
 
       if (result.requires_verification) {
         setVerifyEmail(form.email)
-        setNeedsVerification(true)
+        setDevCode(result.dev_code ?? null)
+        setNeedsVerify(true)
         return
       }
 
@@ -43,20 +155,13 @@ export default function Login() {
     }
   }
 
-  const resendVerification = async () => {
-    setResending(true)
-    try {
-      await api.post('/auth/resend-verification', { email: verifyEmail })
-      setResent(true)
-    } catch (_) {
-      setResent(true) // show sent regardless
-    } finally {
-      setResending(false)
-    }
+  const handleVerified = () => {
+    setNeedsVerify(false)
+    setJustVerified(true)
   }
 
-  // ── Needs verification screen ─────────────────────────────────────────
-  if (needsVerification) {
+  // ── Verify code screen ────────────────────────────────────────────────
+  if (needsVerify) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
         <div className="w-full max-w-sm">
@@ -67,44 +172,15 @@ export default function Login() {
               <p className="text-gray-500 text-xs">Network Monitoring</p>
             </div>
           </div>
-
-          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 text-center space-y-4">
-            <div className="text-5xl">✉️</div>
-            <div>
-              <h2 className="text-white font-semibold text-lg mb-1">Verify your email</h2>
-              <p className="text-gray-400 text-sm">
-                Your account isn't verified yet. We sent a link to<br />
-                <span className="text-white font-medium">{verifyEmail}</span>
-              </p>
-            </div>
-
-            {resent && (
-              <div className="bg-green-900/30 border border-green-800 text-green-400 text-sm px-4 py-3 rounded-lg">
-                ✓ Verification email resent! Check your inbox.
-              </div>
-            )}
-
-            <button
-              onClick={resendVerification}
-              disabled={resending || resent}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2.5 text-sm transition-all"
-            >
-              {resending && <Spinner size="sm" />}
-              {resent ? '✓ Email sent' : 'Resend verification email'}
-            </button>
-
-            <div className="bg-gray-800/50 rounded-lg p-3 text-xs text-gray-500 text-left">
-              <p className="font-medium text-gray-400 mb-1">Didn't receive it?</p>
-              <p>• Check your spam/junk folder</p>
-              <p>• Make sure the email address is correct</p>
-            </div>
-
-            <button
-              onClick={() => { setNeedsVerification(false); setResent(false) }}
-              className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
-            >
-              ← Use a different account
-            </button>
+          <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+            <h2 className="text-white font-semibold text-lg mb-1">Verify your email</h2>
+            <p className="text-gray-500 text-sm mb-5">Enter the code we sent you to continue</p>
+            <VerifyCodeStep
+              email={verifyEmail}
+              devCode={devCode}
+              onVerified={handleVerified}
+              onBack={() => setNeedsVerify(false)}
+            />
           </div>
         </div>
       </div>
@@ -125,10 +201,16 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Card */}
         <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
           <h2 className="text-white font-semibold text-lg mb-1">Sign in</h2>
           <p className="text-gray-500 text-sm mb-6">Monitor your network infrastructure</p>
+
+          {/* Just verified success message */}
+          {justVerified && (
+            <div className="bg-green-900/30 border border-green-800 text-green-400 text-sm px-4 py-3 rounded-lg mb-4">
+              ✅ Email verified! You can now sign in.
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-900/30 border border-red-800 text-red-400 text-sm px-4 py-3 rounded-lg mb-4">

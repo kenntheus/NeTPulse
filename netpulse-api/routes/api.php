@@ -11,13 +11,10 @@ use Illuminate\Support\Facades\Route;
 
 // ── Public auth routes ────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
-    Route::post('/register',            [AuthController::class, 'register']);
-    Route::post('/login',               [AuthController::class, 'login']);
-    Route::post('/resend-verification', [AuthController::class, 'resendVerification']);
-
-    // Signed URL — called when user clicks link in email
-    Route::get('/verify-email', [AuthController::class, 'verifyEmail'])
-        ->name('auth.verify-email');
+    Route::post('/register',     [AuthController::class, 'register']);
+    Route::post('/verify-code',  [AuthController::class, 'verifyCode']);
+    Route::post('/resend-code',  [AuthController::class, 'resendCode']);
+    Route::post('/login',        [AuthController::class, 'login']);
 });
 
 // ── Protected routes ──────────────────────────────────────────────────────────
