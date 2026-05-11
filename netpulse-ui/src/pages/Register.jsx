@@ -52,12 +52,12 @@ function VerifyCodeStep({ email, devCode, onVerified }) {
       </div>
 
       {/* Dev mode code display */}
-      {displayCode && (
+      {/* {displayCode && (
         <div className="bg-amber-900/30 border border-amber-700 rounded-lg p-3 text-center">
           <p className="text-amber-400 text-xs font-semibold mb-1">🔧 Dev mode — your code:</p>
           <p className="text-amber-300 text-2xl font-mono font-bold tracking-widest">{displayCode}</p>
         </div>
-      )}
+      )} */}
 
       {error && (
         <div className="bg-red-900/30 border border-red-800 text-red-400 text-sm px-4 py-3 rounded-lg">
