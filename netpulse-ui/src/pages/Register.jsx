@@ -1,17 +1,15 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../store/AuthContext'
+import { Link } from 'react-router-dom'
 import Spinner from '../components/ui/Spinner'
 import api from '../lib/api'
 
-// ── Code input step ───────────────────────────────────────────────────────────
-function VerifyCodeStep({ email, devCode, onVerified }) {
+// ── Code verification step ────────────────────────────────────────────────────
+function VerifyCodeStep({ email, onVerified, onBack }) {
   const [code,      setCode]      = useState('')
   const [error,     setError]     = useState('')
   const [loading,   setLoading]   = useState(false)
   const [resending, setResending] = useState(false)
   const [resent,    setResent]    = useState(false)
-  const [newDevCode,setNewDevCode]= useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -32,14 +30,11 @@ function VerifyCodeStep({ email, devCode, onVerified }) {
     setResending(true)
     setResent(false)
     try {
-      const { data } = await api.post('/auth/resend-code', { email })
+      await api.post('/auth/resend-code', { email })
       setResent(true)
-      if (data.dev_code) setNewDevCode(data.dev_code)
     } catch (_) { setResent(true) }
     finally { setResending(false) }
   }
-
-  const displayCode = newDevCode ?? devCode
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -50,14 +45,6 @@ function VerifyCodeStep({ email, devCode, onVerified }) {
           <span className="text-white font-medium">{email}</span>
         </p>
       </div>
-
-      {/* Dev mode code display */}
-      {/* {displayCode && (
-        <div className="bg-amber-900/30 border border-amber-700 rounded-lg p-3 text-center">
-          <p className="text-amber-400 text-xs font-semibold mb-1">🔧 Dev mode — your code:</p>
-          <p className="text-amber-300 text-2xl font-mono font-bold tracking-widest">{displayCode}</p>
-        </div>
-      )} */}
 
       {error && (
         <div className="bg-red-900/30 border border-red-800 text-red-400 text-sm px-4 py-3 rounded-lg">
@@ -95,12 +82,15 @@ function VerifyCodeStep({ email, devCode, onVerified }) {
         Verify Email
       </button>
 
-      <div className="text-center">
+      <div className="flex items-center justify-between text-xs">
+        <button type="button" onClick={onBack} className="text-gray-500 hover:text-gray-300 transition-colors">
+          ← Back
+        </button>
         <button
           type="button"
           onClick={resend}
           disabled={resending}
-          className="text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors"
+          className="text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors"
         >
           {resending ? 'Sending…' : "Didn't receive it? Resend code"}
         </button>
@@ -128,14 +118,69 @@ function SuccessStep() {
   )
 }
 
+// ── Already registered — just needs verification ──────────────────────────────
+function AlreadyRegisteredStep({ email, onContinue, onBack }) {
+  const [sending, setSending] = useState(false)
+  const [sent,    setSent]    = useState(false)
+  const [error,   setError]   = useState('')
+
+  const sendCode = async () => {
+    setSending(true)
+    setError('')
+    try {
+      await api.post('/auth/resend-code', { email })
+      setSent(true)
+      onContinue()
+    } catch (err) {
+      setError(err.response?.data?.message ?? 'Failed to send code.')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center py-2">
+        <div className="text-4xl mb-3">⚠️</div>
+        <h3 className="text-white font-semibold mb-2">Email already registered</h3>
+        <p className="text-gray-400 text-sm">
+          <span className="text-white font-medium">{email}</span> is already registered but not yet verified.
+        </p>
+      </div>
+
+      {error && (
+        <div className="bg-red-900/30 border border-red-800 text-red-400 text-sm px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      <button
+        onClick={sendCode}
+        disabled={sending}
+        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2.5 text-sm transition-all"
+      >
+        {sending && <Spinner size="sm" />}
+        Send me the verification code
+      </button>
+
+      <button
+        onClick={onBack}
+        className="w-full text-center text-gray-500 hover:text-gray-300 text-sm transition-colors"
+      >
+        Use a different email
+      </button>
+    </div>
+  )
+}
+
 // ── Main Register page ────────────────────────────────────────────────────────
 export default function Register() {
-  const { loading } = useAuth()
-  const [step,     setStep]     = useState('form')   // form | verify | success
+  const [step,     setStep]     = useState('form')
   const [regEmail, setRegEmail] = useState('')
-  const [devCode,  setDevCode]  = useState(null)
-  const [form,     setForm]     = useState({ name: '', email: '', password: '', password_confirmation: '' })
-  const [error,    setError]    = useState('')
+  const [form,     setForm]     = useState({
+    name: '', email: '', password: '', password_confirmation: ''
+  })
+  const [error,      setError]      = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e) => {
@@ -153,19 +198,37 @@ export default function Register() {
 
     setSubmitting(true)
     try {
-      const { data } = await api.post('/auth/register', {
+      await api.post('/auth/register', {
         name: form.name,
         email: form.email,
         password: form.password,
         password_confirmation: form.password_confirmation,
       })
       setRegEmail(form.email)
-      setDevCode(data.dev_code ?? null)
       setStep('verify')
     } catch (err) {
-      const errors = err.response?.data?.errors
-      const first  = errors ? Object.values(errors)[0]?.[0] : null
-      setError(first ?? err.response?.data?.message ?? 'Registration failed.')
+      const errors  = err.response?.data?.errors
+      const message = err.response?.data?.message ?? ''
+
+      // Email already taken — check if it's an unverified account
+      if (errors?.email || message.toLowerCase().includes('already')) {
+        const emailVal = form.email
+
+        // Check if it's unverified by trying to resend
+        try {
+          const { data } = await api.post('/auth/resend-code', { email: emailVal })
+          // If resend works, it's unverified — show the "already registered" step
+          setRegEmail(emailVal)
+          setStep('already-registered')
+        } catch (_) {
+          // Fully registered and verified — just tell them to log in
+          setError('This email is already registered. Please sign in instead.')
+        }
+        return
+      }
+
+      const first = errors ? Object.values(errors)[0]?.[0] : null
+      setError(first ?? message ?? 'Registration failed.')
     } finally {
       setSubmitting(false)
     }
@@ -186,24 +249,27 @@ export default function Register() {
 
         <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
 
-          {/* Step indicators */}
-          {step !== 'success' && (
+          {/* Step indicators — only for form and verify */}
+          {(step === 'form' || step === 'verify') && (
             <div className="flex items-center gap-2 mb-5">
               {['form', 'verify'].map((s, i) => (
                 <div key={s} className="flex items-center gap-2">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                    step === s ? 'bg-blue-600 text-white' :
-                    (step === 'verify' && s === 'form') ? 'bg-green-600 text-white' :
+                    step === s          ? 'bg-blue-600 text-white' :
+                    step === 'verify' && s === 'form' ? 'bg-green-600 text-white' :
                     'bg-gray-700 text-gray-400'
                   }`}>
                     {step === 'verify' && s === 'form' ? '✓' : i + 1}
                   </div>
-                  {i === 0 && <div className={`flex-1 h-px w-8 ${step === 'verify' ? 'bg-blue-500' : 'bg-gray-700'}`} />}
+                  {i === 0 && (
+                    <div className={`h-px w-8 ${step === 'verify' ? 'bg-blue-500' : 'bg-gray-700'}`} />
+                  )}
                 </div>
               ))}
             </div>
           )}
 
+          {/* ── Registration form ── */}
           {step === 'form' && (
             <>
               <h2 className="text-white font-semibold text-lg mb-1">Create account</h2>
@@ -212,6 +278,13 @@ export default function Register() {
               {error && (
                 <div className="bg-red-900/30 border border-red-800 text-red-400 text-sm px-4 py-3 rounded-lg mb-4">
                   {error}
+                  {error.includes('already registered') && (
+                    <div className="mt-2">
+                      <Link to="/login" className="text-blue-400 hover:text-blue-300 underline text-xs">
+                        → Go to Sign in
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -248,9 +321,9 @@ export default function Register() {
                       ))}
                     </div>
                     <p className="text-xs text-gray-500">
-                      {form.password.length < 8 ? 'Too short' :
+                      {form.password.length < 8          ? 'Too short' :
                        /[^a-zA-Z0-9]/.test(form.password) ? '✓ Strong password' :
-                       /[0-9]/.test(form.password) ? 'Add symbols for stronger password' :
+                       /[0-9]/.test(form.password)         ? 'Add symbols for stronger password' :
                        'Add numbers and symbols'}
                     </p>
                   </div>
@@ -267,18 +340,31 @@ export default function Register() {
             </>
           )}
 
+          {/* ── Already registered but unverified ── */}
+          {step === 'already-registered' && (
+            <>
+              <AlreadyRegisteredStep
+                email={regEmail}
+                onContinue={() => setStep('verify')}
+                onBack={() => { setStep('form'); setError('') }}
+              />
+            </>
+          )}
+
+          {/* ── Enter verification code ── */}
           {step === 'verify' && (
             <>
               <h2 className="text-white font-semibold text-lg mb-1">Verify your email</h2>
               <p className="text-gray-500 text-sm mb-5">Enter the code we sent you</p>
               <VerifyCodeStep
                 email={regEmail}
-                devCode={devCode}
                 onVerified={() => setStep('success')}
+                onBack={() => setStep('form')}
               />
             </>
           )}
 
+          {/* ── Success ── */}
           {step === 'success' && <SuccessStep />}
         </div>
 

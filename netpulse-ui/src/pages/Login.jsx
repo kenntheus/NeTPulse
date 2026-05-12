@@ -5,13 +5,12 @@ import Spinner from '../components/ui/Spinner'
 import api from '../lib/api'
 
 // ── Verify code step (shown when email not yet verified) ──────────────────────
-function VerifyCodeStep({ email, devCode, onVerified, onBack }) {
-  const [code,       setCode]       = useState('')
-  const [error,      setError]      = useState('')
-  const [loading,    setLoading]    = useState(false)
-  const [resending,  setResending]  = useState(false)
-  const [resent,     setResent]     = useState(false)
-  const [newDevCode, setNewDevCode] = useState(null)
+function VerifyCodeStep({ email, onVerified, onBack }) {
+  const [code,      setCode]      = useState('')
+  const [error,     setError]     = useState('')
+  const [loading,   setLoading]   = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resent,    setResent]    = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -32,14 +31,11 @@ function VerifyCodeStep({ email, devCode, onVerified, onBack }) {
     setResending(true)
     setResent(false)
     try {
-      const { data } = await api.post('/auth/resend-code', { email })
+      await api.post('/auth/resend-code', { email })
       setResent(true)
-      if (data.dev_code) setNewDevCode(data.dev_code)
     } catch (_) { setResent(true) }
     finally { setResending(false) }
   }
-
-  const displayCode = newDevCode ?? devCode
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -50,14 +46,6 @@ function VerifyCodeStep({ email, devCode, onVerified, onBack }) {
           <span className="text-white font-medium">{email}</span>
         </p>
       </div>
-
-      {/* Dev mode */}
-      {displayCode && (
-        <div className="bg-amber-900/30 border border-amber-700 rounded-lg p-3 text-center">
-          <p className="text-amber-400 text-xs font-semibold mb-1">🔧 Dev mode — your code:</p>
-          <p className="text-amber-300 text-2xl font-mono font-bold tracking-widest">{displayCode}</p>
-        </div>
-      )}
 
       {error && (
         <div className="bg-red-900/30 border border-red-800 text-red-400 text-sm px-4 py-3 rounded-lg">
@@ -96,15 +84,12 @@ function VerifyCodeStep({ email, devCode, onVerified, onBack }) {
       </button>
 
       <div className="flex items-center justify-between text-xs">
-        <button type="button" onClick={onBack} className="text-gray-500 hover:text-gray-300 transition-colors">
+        <button type="button" onClick={onBack}
+          className="text-gray-500 hover:text-gray-300 transition-colors">
           ← Back to login
         </button>
-        <button
-          type="button"
-          onClick={resend}
-          disabled={resending}
-          className="text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors"
-        >
+        <button type="button" onClick={resend} disabled={resending}
+          className="text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors">
           {resending ? 'Sending…' : 'Resend code'}
         </button>
       </div>
@@ -121,19 +106,14 @@ export default function Login() {
   const [error,   setError]   = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Verification state
-  const [needsVerify, setNeedsVerify] = useState(false)
-  const [verifyEmail, setVerifyEmail] = useState('')
-  const [devCode,     setDevCode]     = useState(null)
-
-  // After successful verification — show success and prompt login
+  const [needsVerify,  setNeedsVerify]  = useState(false)
+  const [verifyEmail,  setVerifyEmail]  = useState('')
   const [justVerified, setJustVerified] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
       const result = await login(form.email, form.password)
 
@@ -144,7 +124,6 @@ export default function Login() {
 
       if (result.requires_verification) {
         setVerifyEmail(form.email)
-        setDevCode(result.dev_code ?? null)
         setNeedsVerify(true)
         return
       }
@@ -174,10 +153,9 @@ export default function Login() {
           </div>
           <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
             <h2 className="text-white font-semibold text-lg mb-1">Verify your email</h2>
-            <p className="text-gray-500 text-sm mb-5">Enter the code we sent you to continue</p>
+            <p className="text-gray-500 text-sm mb-5">Enter the code we sent to complete login</p>
             <VerifyCodeStep
               email={verifyEmail}
-              devCode={devCode}
               onVerified={handleVerified}
               onBack={() => setNeedsVerify(false)}
             />
@@ -192,7 +170,6 @@ export default function Login() {
     <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
 
-        {/* Logo */}
         <div className="flex items-center gap-3 mb-8 justify-center">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">N</div>
           <div>
@@ -205,7 +182,6 @@ export default function Login() {
           <h2 className="text-white font-semibold text-lg mb-1">Sign in</h2>
           <p className="text-gray-500 text-sm mb-6">Monitor your network infrastructure</p>
 
-          {/* Just verified success message */}
           {justVerified && (
             <div className="bg-green-900/30 border border-green-800 text-green-400 text-sm px-4 py-3 rounded-lg mb-4">
               ✅ Email verified! You can now sign in.
@@ -229,7 +205,6 @@ export default function Login() {
                 className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
             </div>
-
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1.5">Password</label>
               <input

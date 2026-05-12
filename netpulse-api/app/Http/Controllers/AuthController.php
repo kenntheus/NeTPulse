@@ -29,14 +29,12 @@ class AuthController extends Controller
             'email_verified_at' => null,
         ]);
 
-        $code      = $user->generateVerificationCode();
-        $mailError = $this->sendVerificationCode($user, $code);
+        $code = $user->generateVerificationCode();
+        $this->sendVerificationCode($user, $code);
 
         return response()->json([
-            'message'    => 'Account created! Enter the 6-digit code sent to your email.',
-            'email'      => $user->email,
-            'mail_error' => $mailError, // shows actual error in response
-            'dev_code'   => app()->isLocal() ? $code : null, // always show in local
+            'message' => 'Account created! Enter the 6-digit code sent to your email.',
+            'email'   => $user->email,
         ], 201);
     }
 
@@ -81,17 +79,19 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || $user->isVerified()) {
+        if (!$user) {
             return response()->json(['message' => 'If that email is registered and unverified, a new code has been sent.']);
         }
 
-        $code      = $user->generateVerificationCode();
-        $mailError = $this->sendVerificationCode($user, $code);
+        if ($user->isVerified()) {
+            return response()->json(['message' => 'This account is already verified. Please log in.']);
+        }
+
+        $code = $user->generateVerificationCode();
+        $this->sendVerificationCode($user, $code);
 
         return response()->json([
-            'message'    => 'A new code has been sent to your email.',
-            'mail_error' => $mailError,
-            'dev_code'   => app()->isLocal() ? $code : null,
+            'message' => 'A new 6-digit code has been sent to your email.',
         ]);
     }
 
@@ -112,15 +112,15 @@ class AuthController extends Controller
 
         if (!$user->isVerified()) {
             Auth::logout();
-            $code      = $user->generateVerificationCode();
-            $mailError = $this->sendVerificationCode($user, $code);
+
+            // Send a fresh code so they can verify immediately
+            $code = $user->generateVerificationCode();
+            $this->sendVerificationCode($user, $code);
 
             return response()->json([
-                'message'               => 'Your email is not verified. We sent a new code.',
+                'message'               => 'Your email is not verified. We sent a verification code to your email.',
                 'requires_verification' => true,
                 'email'                 => $user->email,
-                'mail_error'            => $mailError,
-                'dev_code'              => app()->isLocal() ? $code : null,
             ], 403);
         }
 
@@ -143,20 +143,13 @@ class AuthController extends Controller
         return response()->json(['user' => $this->formatUser($request->user())]);
     }
 
-    // ── Private ───────────────────────────────────────────────────────────
-
-    /**
-     * Returns null on success, error message string on failure.
-     */
-    private function sendVerificationCode(User $user, string $code): ?string
+    private function sendVerificationCode(User $user, string $code): void
     {
         try {
             Mail::to($user->email)->send(new VerificationCodeMail($user->name, $code));
-            \Log::info("[VerifyCode] Email sent to {$user->email}");
-            return null; // success
+            \Log::info("[VerifyCode] Sent to {$user->email}");
         } catch (\Exception $e) {
-            \Log::error("[VerifyCode] FAILED for {$user->email}: " . $e->getMessage());
-            return $e->getMessage(); // return actual error
+            \Log::error("[VerifyCode] Failed for {$user->email}: " . $e->getMessage());
         }
     }
 

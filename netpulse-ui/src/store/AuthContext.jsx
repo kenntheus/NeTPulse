@@ -12,35 +12,35 @@ export function AuthProvider({ children }) {
   })
   const [loading, setLoading] = useState(false)
 
-  /**
-   * Login — returns:
-   *   { success: true }
-   *   { requires_verification: true, email, dev_code }
-   *   { success: false, message }
-   */
   const login = async (email, password) => {
     setLoading(true)
     try {
       const { data } = await api.post('/auth/login', { email, password })
 
-      if (data.requires_verification) {
-        return {
-          requires_verification: true,
-          email:    data.email,
-          dev_code: data.dev_code ?? null,
-        }
-      }
-
+      // Successful login — token returned
       localStorage.setItem('netpulse_token', data.token)
       localStorage.setItem('netpulse_user',  JSON.stringify(data.user))
       setUser(data.user)
       return { success: true }
 
     } catch (err) {
-      const msg = err.response?.data?.errors?.email?.[0]
-        ?? err.response?.data?.message
+      const data   = err.response?.data
+      const status = err.response?.status
+
+      // 403 = email not verified — backend sends requires_verification: true
+      if (status === 403 && data?.requires_verification) {
+        return {
+          requires_verification: true,
+          email: data.email,
+        }
+      }
+
+      // Validation error (wrong password etc.)
+      const msg = data?.errors?.email?.[0]
+        ?? data?.message
         ?? 'Login failed. Please try again.'
       return { success: false, message: msg }
+
     } finally {
       setLoading(false)
     }
