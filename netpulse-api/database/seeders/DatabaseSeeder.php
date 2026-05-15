@@ -10,25 +10,11 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Creates ONE admin account — pre-verified so you can log in immediately.
-        // Change this email/password before going to production!
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@netpulse.dev'],
-            [
-                'name'              => 'Admin User',
-                'password'          => Hash::make('Admin@12345!'),
-                'role'              => 'admin',
-                'email_verified_at' => now(), // pre-verified
-            ]
-        );
+        if (User::where('role', 'admin')->exists()) {
+            $this->command->info('✅ Admin already exists — skipping seed.');
+            return;
+        }
 
-        $this->command->info('✅ Admin account ready.');
-        $this->command->info('');
-        $this->command->info('  Email:    admin@netpulse.dev');
-        $this->command->info('  Password: Admin@12345!');
-        $this->command->info('');
-        $this->command->warn('  ⚠ Change this password after first login!');
-        $this->command->info('');
-        $this->command->info('  All other users must register and verify their email.');
+        $this->command->info('ℹ No admin found. Use the /setup page to create your admin account.');
     }
 }

@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './store/AuthContext'
 import AppLayout  from './components/layout/AppLayout'
 import Login      from './pages/Login'
 import Register   from './pages/Register'
+import Setup      from './pages/Setup'
 import Dashboard  from './pages/Dashboard'
 import Devices    from './pages/Devices'
 import Logs       from './pages/Logs'
@@ -12,18 +13,27 @@ import Account    from './pages/Account'
 import NotFound   from './pages/NotFound'
 
 function ProtectedRoute({ children }) {
-  const { user } = useAuth()
+  const { user, needsSetup } = useAuth()
+  if (needsSetup) return <Navigate to="/setup" replace />
   return user ? children : <Navigate to="/login" replace />
 }
 
 function GuestRoute({ children }) {
-  const { user } = useAuth()
+  const { user, needsSetup } = useAuth()
+  if (needsSetup) return <Navigate to="/setup" replace />
   return !user ? children : <Navigate to="/" replace />
+}
+
+function SetupRoute({ children }) {
+  const { needsSetup } = useAuth()
+  if (needsSetup === null) return null
+  return needsSetup ? children : <Navigate to="/login" replace />
 }
 
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/setup"    element={<SetupRoute><Setup /></SetupRoute>} />
       <Route path="/login"    element={<GuestRoute><Login /></GuestRoute>} />
       <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 

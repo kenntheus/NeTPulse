@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Route;
 
 // ── Public auth routes ────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
+    Route::get('/setup-status',  [AuthController::class, 'setupStatus']);
+    Route::post('/setup',        [AuthController::class, 'setup']);
     Route::post('/register',     [AuthController::class, 'register']);
     Route::post('/verify-code',  [AuthController::class, 'verifyCode']);
     Route::post('/resend-code',  [AuthController::class, 'resendCode']);

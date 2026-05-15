@@ -13,6 +13,36 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
+    public function setupStatus(): JsonResponse
+    {
+        return response()->json([
+            'needs_setup' => !User::where('role', 'admin')->exists(),
+        ]);
+    }
+
+    public function setup(Request $request): JsonResponse
+    {
+        if (User::where('role', 'admin')->exists()) {
+            return response()->json(['message' => 'Setup already complete.'], 403);
+        }
+
+        $validated = $request->validate([
+            'name'     => ['required', 'string', 'max:100'],
+            'email'    => ['required', 'email', 'max:150', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        User::create([
+            'name'              => $validated['name'],
+            'email'             => $validated['email'],
+            'password'          => Hash::make($validated['password']),
+            'role'              => 'admin',
+            'email_verified_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Admin account created. You can now log in.'], 201);
+    }
+
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([

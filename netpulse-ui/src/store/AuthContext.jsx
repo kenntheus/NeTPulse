@@ -1,16 +1,23 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import api from '../lib/api'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user,    setUser]    = useState(() => {
+  const [user,        setUser]        = useState(() => {
     try {
       const stored = localStorage.getItem('netpulse_user')
       return stored ? JSON.parse(stored) : null
     } catch (_) { return null }
   })
-  const [loading, setLoading] = useState(false)
+  const [loading,     setLoading]     = useState(false)
+  const [needsSetup,  setNeedsSetup]  = useState(null)
+
+  useEffect(() => {
+    api.get('/auth/setup-status')
+      .then(r => setNeedsSetup(r.data.needs_setup))
+      .catch(() => setNeedsSetup(false))
+  }, [])
 
   const login = async (email, password) => {
     setLoading(true)
@@ -55,8 +62,10 @@ export function AuthProvider({ children }) {
 
   const isAdmin = () => user?.role === 'admin'
 
+  const completeSetup = () => setNeedsSetup(false)
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin }}>
+    <AuthContext.Provider value={{ user, loading, needsSetup, login, logout, isAdmin, completeSetup }}>
       {children}
     </AuthContext.Provider>
   )
