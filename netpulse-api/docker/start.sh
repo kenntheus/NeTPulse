@@ -11,6 +11,9 @@ php artisan migrate --force 2>&1
 echo "==> Seeding database..."
 php artisan db:seed --force 2>&1 || echo "Seeder skipped (may already exist)"
 
+echo "==> Regenerating autoloader..."
+composer dump-autoload --optimize --no-scripts 2>&1 || true
+
 echo "==> Caching..."
 php artisan config:cache 2>&1 || true
 php artisan route:cache 2>&1 || true
