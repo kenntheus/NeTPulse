@@ -11,7 +11,8 @@ WORKDIR /var/www
 
 COPY . .
 
-RUN php -d memory_limit=-1 /usr/bin/composer install --no-dev --optimize-autoloader
+RUN cp .env.example .env && \
+    php -d memory_limit=-1 /usr/bin/composer install --no-dev --optimize-autoloader
 
 RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
