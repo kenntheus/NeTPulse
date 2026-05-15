@@ -60,7 +60,7 @@ function AiChat() {
         </div>
         <div>
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">NetPulse AI Assistant</h3>
-          <p className="text-xs text-gray-500">Powered by Claude · Real network context</p>
+          <p className="text-xs text-gray-500">Powered by Gemini 2.0 Flash Lite · Real network context</p>
         </div>
         <span className="ml-auto flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />

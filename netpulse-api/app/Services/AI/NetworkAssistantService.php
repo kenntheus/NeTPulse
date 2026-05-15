@@ -17,34 +17,40 @@ class NetworkAssistantService
 
     public function chat(string $userMessage, array $history = []): string
     {
-        $apiKey = config('services.anthropic.key');
+        $apiKey = config('services.gemini.key');
 
         if (!$apiKey) {
-            return "⚠️ Claude API key not configured. Add ANTHROPIC_API_KEY to your .env file.";
+            return "⚠️ Gemini API key not configured. Add GEMINI_API_KEY to your .env file. Get a free key at aistudio.google.com.";
         }
 
         $systemPrompt = $this->buildSystemPrompt();
-        $messages     = $this->buildMessages($history, $userMessage);
+        $contents     = $this->buildContents($history, $userMessage);
 
         try {
             $response = Http::withHeaders([
-                'x-api-key'         => $apiKey,
-                'anthropic-version' => '2023-06-01',
-                'Content-Type'      => 'application/json',
-            ])->timeout(30)->post('https://api.anthropic.com/v1/messages', [
-                'model'      => 'claude-haiku-4-5-20251001',
-                'max_tokens' => 1024,
-                'system'     => $systemPrompt,
-                'messages'   => $messages,
-            ]);
+                'Content-Type' => 'application/json',
+            ])->timeout(30)->post(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={$apiKey}",
+                [
+                    'system_instruction' => [
+                        'parts' => [['text' => $systemPrompt]],
+                    ],
+                    'contents'           => $contents,
+                    'generationConfig'   => ['maxOutputTokens' => 1024],
+                ]
+            );
 
             if (!$response->successful()) {
-                Log::error('[AI Assistant] API error: ' . $response->body());
-                return "I'm having trouble connecting to Claude right now. Please try again.";
+                Log::error('[AI Assistant] Gemini API error: ' . $response->body());
+                $status = $response->status();
+                if ($status === 429) {
+                    return "⏳ Rate limit reached. The free tier allows a limited number of requests per minute — please wait a moment and try again.";
+                }
+                return "I'm having trouble connecting to Gemini right now (HTTP {$status}). Please try again.";
             }
 
             $data = $response->json();
-            return $data['content'][0]['text'] ?? 'No response received.';
+            return $data['candidates'][0]['content']['parts'][0]['text'] ?? 'No response received.';
 
         } catch (\Exception $e) {
             Log::error('[AI Assistant] Exception: ' . $e->getMessage());
@@ -113,22 +119,20 @@ Always be specific — use real device names, IPs, and numbers from the data abo
 PROMPT;
     }
 
-    private function buildMessages(array $history, string $userMessage): array
+    private function buildContents(array $history, string $userMessage): array
     {
-        $messages = [];
+        $contents = [];
 
-        // Include conversation history (last 10 messages)
+        // Gemini uses "model" for assistant turns; map accordingly
         foreach (array_slice($history, -10) as $turn) {
             if (isset($turn['role'], $turn['content'])) {
-                $messages[] = [
-                    'role'    => $turn['role'],
-                    'content' => $turn['content'],
-                ];
+                $role       = $turn['role'] === 'assistant' ? 'model' : 'user';
+                $contents[] = ['role' => $role, 'parts' => [['text' => $turn['content']]]];
             }
         }
 
-        $messages[] = ['role' => 'user', 'content' => $userMessage];
+        $contents[] = ['role' => 'user', 'parts' => [['text' => $userMessage]]];
 
-        return $messages;
+        return $contents;
     }
 }

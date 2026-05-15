@@ -62,13 +62,6 @@ export default function Dashboard() {
   return (
     <div className="p-6 space-y-6 max-w-screen-xl mx-auto">
 
-      {/* Refresh timestamp */}
-      {lastRefresh && (
-        <p className="text-xs text-gray-400 dark:text-gray-500 text-right -mb-2">
-          Last updated: {lastRefresh.toLocaleTimeString()}
-        </p>
-      )}
-
       {/* ── Summary cards ─────────────────────────────────────────── */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard label="Total devices"  value={summary?.total}         icon="⬡" color="blue"  />
@@ -151,7 +144,14 @@ export default function Dashboard() {
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">All Devices</h3>
-          <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">{devices.length} total</span>
+          <div className="flex items-center gap-3">
+            {lastRefresh && (
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                Updated {lastRefresh.toLocaleTimeString()}
+              </span>
+            )}
+            <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">{devices.length} total</span>
+          </div>
         </div>
 
         <div className="overflow-x-auto">

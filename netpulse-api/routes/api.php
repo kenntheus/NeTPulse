@@ -19,6 +19,12 @@ Route::prefix('auth')->group(function () {
 
 // ── Protected routes ──────────────────────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('account')->group(function () {
+        Route::patch('/name', [App\Http\Controllers\AccountController::class, 'updateName']);
+        Route::patch('/email', [App\Http\Controllers\AccountController::class, 'requestEmailUpdate']);
+        Route::post('/verify-email-change', [App\Http\Controllers\AccountController::class, 'verifyEmailChange']);
+        Route::patch('/password', [App\Http\Controllers\AccountController::class, 'updatePassword']);
+    });
 
     Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
