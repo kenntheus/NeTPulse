@@ -7,7 +7,8 @@ import Dashboard  from './pages/Dashboard'
 import Devices    from './pages/Devices'
 import Logs       from './pages/Logs'
 import Alerts     from './pages/Alerts'
-import AiInsights from './pages/AiInsights'
+import AiInsights from './pages/AIInsights'
+import Account    from './pages/Account'
 import NotFound   from './pages/NotFound'
 
 function ProtectedRoute({ children }) {
@@ -32,6 +33,7 @@ function AppRoutes() {
         <Route path="/logs"    element={<Logs />} />
         <Route path="/alerts"  element={<Alerts />} />
         <Route path="/ai"      element={<AiInsights />} />
+        <Route path="/account" element={<Account />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
