@@ -37,12 +37,12 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, isAdmin =
     : 'text-green-600 dark:text-green-400'
 
   return (
-    <div className="group bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex flex-col gap-4 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200">
+    <div className="group rounded-xl border p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
 
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xl flex-shrink-0">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center text-xl flex-shrink-0" style={{ backgroundColor: 'var(--muted-bg)' }}>
             {TYPE_ICON[device.type] ?? TYPE_ICON.other}
           </div>
           <div className="min-w-0">
@@ -85,13 +85,13 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, isAdmin =
       </div>
 
       {device.description && (
-        <p className="text-xs text-gray-400 dark:text-gray-500 leading-relaxed line-clamp-2 border-t border-gray-100 dark:border-gray-800 pt-3 -mt-1">
+        <p className="text-xs text-gray-400 leading-relaxed line-clamp-2 border-t pt-3 -mt-1" style={{ borderColor: 'var(--card-border)' }}>
           {device.description}
         </p>
       )}
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-1 border-t border-gray-100 dark:border-gray-800 mt-auto">
+      <div className="flex items-center gap-2 pt-1 border-t mt-auto" style={{ borderColor: 'var(--card-border)' }}>
         <Button size="sm" variant="secondary" loading={pinging} onClick={handlePing} className="flex-1">
           {!pinging && (
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -178,7 +178,8 @@ export default function Devices() {
             placeholder="Search name or IP…"
             value={filters.search}
             onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
-            className="pl-9 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 w-52"
+            className="pl-9 pr-4 py-2 text-sm border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 w-52"
+            style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
           />
         </div>
 

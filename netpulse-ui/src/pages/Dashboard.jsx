@@ -14,7 +14,7 @@ const TYPE_ICON = { router: '🌐', switch: '🔀', server: '🗄️', firewall:
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 shadow-lg text-xs">
+    <div className="rounded-lg px-3 py-2 shadow-lg text-xs border" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
       <p className="text-gray-500 mb-1">{label}</p>
       <p className="font-semibold text-gray-900 dark:text-white">{payload[0].value}{payload[0].name.includes('uptime') ? '%' : ' ms'}</p>
     </div>
@@ -74,7 +74,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Latency area chart */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <div className="rounded-xl border p-5" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Avg Latency</h3>
@@ -115,7 +115,7 @@ export default function Dashboard() {
         </div>
 
         {/* Uptime bar chart */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <div className="rounded-xl border p-5" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Uptime %</h3>
@@ -141,8 +141,8 @@ export default function Dashboard() {
       </div>
 
       {/* ── Device table ──────────────────────────────────────────── */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+      <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+        <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--card-border)' }}>
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">All Devices</h3>
           <div className="flex items-center gap-3">
             {lastRefresh && (
@@ -150,22 +150,22 @@ export default function Dashboard() {
                 Updated {lastRefresh.toLocaleTimeString()}
               </span>
             )}
-            <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">{devices.length} total</span>
+            <span className="text-xs text-gray-400 px-2 py-1 rounded-md" style={{ backgroundColor: 'var(--muted-bg)' }}>{devices.length} total</span>
           </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800/60 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <tr className="text-xs text-gray-400 uppercase tracking-wider" style={{ backgroundColor: 'var(--muted-bg)' }}>
                 {['Status', 'Name', 'IP Address', 'Type', 'Location', 'Latency', 'Last Check'].map(h => (
                   <th key={h} className="py-3 px-4 text-left font-semibold whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody className="divide-y divide-[var(--card-border)]">
               {devices.map(d => (
-                <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                <tr key={d.id} className="hover:bg-[var(--muted-bg)] transition-colors">
                   <td className="py-3 px-4">
                     <StatusDot status={d.status} animate />
                   </td>

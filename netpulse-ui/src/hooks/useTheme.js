@@ -79,6 +79,9 @@ function apply(themeId) {
   root.style.setProperty('--sidebar-border', t.sidebarBorder)
   root.style.setProperty('--sidebar-card',   t.sidebarCard)
   root.style.setProperty('--content-bg',     t.contentBg)
+  root.style.setProperty('--card-bg',        t.sidebarBg)
+  root.style.setProperty('--card-border',    t.sidebarBorder)
+  root.style.setProperty('--muted-bg',       t.sidebarCard)
 }
 
 export function useTheme() {

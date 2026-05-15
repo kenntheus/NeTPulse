@@ -55,17 +55,17 @@ export default function AiInsights() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ backgroundColor: 'var(--muted-bg)' }}>
         {[
           { id: 'anomalies',    label: '🔺 Anomalies' },
           { id: 'fingerprints', label: '🧬 Fingerprints' },
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              tab === t.id
-                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}>
+              tab === t.id ? 'text-white shadow-sm' : 'text-gray-400 hover:text-gray-200'
+            }`}
+            style={tab === t.id ? { backgroundColor: 'var(--card-bg)' } : undefined}
+          >
             {t.label}
           </button>
         ))}
@@ -89,11 +89,12 @@ export default function AiInsights() {
                 const isAnomalous = z && Math.abs(z) > 1.5
                 return (
                   <div key={b.device_id}
-                    className={`bg-white dark:bg-gray-900 rounded-xl border p-5 ${
-                      isAnomalous
-                        ? 'border-red-300 dark:border-red-800'
-                        : 'border-gray-200 dark:border-gray-700'
-                    }`}>
+                    className="rounded-xl border p-5"
+                    style={{
+                      backgroundColor: 'var(--card-bg)',
+                      borderColor: isAnomalous ? 'rgb(153 27 27)' : 'var(--card-border)',
+                    }}
+                  >
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{b.device_name}</h3>
@@ -113,9 +114,9 @@ export default function AiInsights() {
                         { label: 'Max',         value: `${b.max}ms` },
                         { label: 'Current',     value: b.current_ms ? `${b.current_ms}ms` : '—' },
                       ].map(({ label, value }) => (
-                        <div key={label} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                        <div key={label} className="rounded-lg p-2" style={{ backgroundColor: 'var(--muted-bg)' }}>
                           <p className="text-gray-400 mb-0.5">{label}</p>
-                          <p className="font-mono font-semibold text-gray-900 dark:text-white">{value}</p>
+                          <p className="font-mono font-semibold text-white">{value}</p>
                         </div>
                       ))}
                     </div>
@@ -140,7 +141,7 @@ export default function AiInsights() {
               {fingerprints.map(f => {
                 const bh = BEHAVIOUR_LABEL[f.behaviour] ?? BEHAVIOUR_LABEL.unknown
                 return (
-                  <div key={f.device_id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+                  <div key={f.device_id} className="rounded-xl border p-5" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <span className="text-xl">{bh.icon}</span>
@@ -170,9 +171,9 @@ export default function AiInsights() {
                         { label: 'Avg ms',    value: f.avg_latency_ms != null ? `${f.avg_latency_ms}ms` : '—' },
                         { label: 'Checks',    value: f.total_checks },
                       ].map(({ label, value }) => (
-                        <div key={label} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                        <div key={label} className="rounded-lg p-2" style={{ backgroundColor: 'var(--muted-bg)' }}>
                           <p className="text-gray-400 mb-0.5">{label}</p>
-                          <p className="font-mono font-semibold text-gray-900 dark:text-white">{value}</p>
+                          <p className="font-mono font-semibold text-white">{value}</p>
                         </div>
                       ))}
                     </div>

@@ -50,10 +50,10 @@ export function Button({ variant = 'primary', size = 'md', loading = false, disa
   const base = 'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none'
   const sizes = { xs: 'px-2.5 py-1 text-xs', sm: 'px-3 py-1.5 text-sm', md: 'px-4 py-2 text-sm', lg: 'px-5 py-2.5 text-base' }
   const variants = {
-    primary:   'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-    secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-400 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700',
+    primary:   'text-white bg-[var(--accent)] hover:bg-[var(--accent-hover)] focus:ring-[var(--accent)]',
+    secondary: 'text-gray-200 border border-[var(--card-border)] bg-[var(--card-bg)] hover:bg-[var(--muted-bg)] focus:ring-gray-400',
     danger:    'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    ghost:     'text-gray-600 hover:bg-gray-100 focus:ring-gray-400 dark:text-gray-300 dark:hover:bg-gray-800',
+    ghost:     'text-gray-300 hover:bg-[var(--muted-bg)] focus:ring-gray-400',
     success:   'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
     warning:   'bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-400',
   }
@@ -82,7 +82,8 @@ export function Input({ label, error, className = '', type = 'text', ...props })
     <div className="flex flex-col gap-1">
       {label && <label className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</label>}
       <input type={type}
-        className={`w-full border rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-colors ${error ? 'border-red-400' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'} ${className}`}
+        className={`w-full border rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-colors ${error ? 'border-red-400' : 'border-[var(--card-border)] focus:border-[var(--accent)]'} ${className}`}
+        style={{ backgroundColor: 'var(--muted-bg)' }}
         {...props} />
       {error && <p className="text-xs text-red-500 mt-0.5">{error}</p>}
     </div>
@@ -95,7 +96,8 @@ export function Select({ label, error, children, className = '', ...props }) {
     <div className="flex flex-col gap-1">
       {label && <label className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</label>}
       <select
-        className={`w-full border rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-colors ${error ? 'border-red-400' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'} ${className}`}
+        className={`w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-colors ${error ? 'border-red-400' : 'border-[var(--card-border)] focus:border-[var(--accent)]'} ${className}`}
+        style={{ backgroundColor: 'var(--muted-bg)' }}
         {...props}>
         {children}
       </select>
@@ -110,7 +112,8 @@ export function Textarea({ label, error, className = '', rows = 3, ...props }) {
     <div className="flex flex-col gap-1">
       {label && <label className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</label>}
       <textarea rows={rows}
-        className={`w-full border rounded-lg px-3 py-2 text-sm resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-colors ${error ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'} ${className}`}
+        className={`w-full border rounded-lg px-3 py-2 text-sm resize-none text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-colors ${error ? 'border-red-400' : 'border-[var(--card-border)]'} ${className}`}
+        style={{ backgroundColor: 'var(--muted-bg)' }}
         {...props} />
       {error && <p className="text-xs text-red-500 mt-0.5">{error}</p>}
     </div>
@@ -137,10 +140,10 @@ export function Modal({ open, onClose, title, size = 'md', children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full ${sizes[size] ?? sizes.md} border border-gray-200 dark:border-gray-700`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h3>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-800 transition-all">
+      <div className={`relative rounded-2xl shadow-2xl w-full ${sizes[size] ?? sizes.md} border`} style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--card-border)' }}>
+          <h3 className="text-base font-semibold text-white">{title}</h3>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-200 hover:bg-[var(--muted-bg)] transition-all">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -197,9 +200,12 @@ export function ToastContainer({ toasts, removeToast }) {
 }
 
 // ── Card ──────────────────────────────────────────────────────────────────────
-export function Card({ children, className = '', padding = true }) {
+export function Card({ children, className = '', padding = true, style }) {
   return (
-    <div className={`bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 ${padding ? 'p-5' : ''} ${className}`}>
+    <div
+      className={`rounded-xl border ${padding ? 'p-5' : ''} ${className}`}
+      style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', ...style }}
+    >
       {children}
     </div>
   )
@@ -235,11 +241,11 @@ export function Pagination({ meta, onPageChange }) {
   if (!meta || meta.last_page <= 1) return null
   const { current_page, last_page, total, from, to } = meta
   return (
-    <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 dark:border-gray-800 text-sm text-gray-500">
+    <div className="flex items-center justify-between px-5 py-3 border-t text-sm text-gray-400" style={{ borderColor: 'var(--card-border)' }}>
       <span className="text-xs">Showing {from}–{to} of {total}</span>
       <div className="flex gap-1.5 items-center">
         <Button size="sm" variant="secondary" disabled={current_page <= 1} onClick={() => onPageChange(current_page - 1)}>← Prev</Button>
-        <span className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-800 rounded-lg font-mono">{current_page} / {last_page}</span>
+        <span className="px-3 py-1.5 text-xs rounded-lg font-mono" style={{ backgroundColor: 'var(--muted-bg)' }}>{current_page} / {last_page}</span>
         <Button size="sm" variant="secondary" disabled={current_page >= last_page} onClick={() => onPageChange(current_page + 1)}>Next →</Button>
       </div>
     </div>
@@ -261,15 +267,16 @@ export function LoadingPage() {
 // ── StatCard ──────────────────────────────────────────────────────────────────
 export function StatCard({ label, value, icon, color = 'blue', trend }) {
   const colors = {
-    blue:   'border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20',
-    green:  'border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20',
-    red:    'border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20',
-    amber:  'border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20',
-    purple: 'border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20',
-    gray:   'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/40',
+    blue:   { text: 'text-blue-400',   bg: 'rgba(37,99,235,0.15)',   border: 'rgba(37,99,235,0.35)'   },
+    green:  { text: 'text-green-400',  bg: 'rgba(22,163,74,0.15)',   border: 'rgba(22,163,74,0.35)'   },
+    red:    { text: 'text-red-400',    bg: 'rgba(220,38,38,0.15)',   border: 'rgba(220,38,38,0.35)'   },
+    amber:  { text: 'text-amber-400',  bg: 'rgba(217,119,6,0.15)',   border: 'rgba(217,119,6,0.35)'   },
+    purple: { text: 'text-purple-400', bg: 'rgba(124,58,237,0.15)', border: 'rgba(124,58,237,0.35)'  },
+    gray:   { text: 'text-gray-400',   bg: 'rgba(107,114,128,0.1)', border: 'rgba(107,114,128,0.25)' },
   }
+  const c = colors[color] ?? colors.blue
   return (
-    <div className={`rounded-xl border p-5 ${colors[color] ?? colors.blue}`}>
+    <div className={`rounded-xl border p-5 ${c.text}`} style={{ backgroundColor: c.bg, borderColor: c.border }}>
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-semibold uppercase tracking-wider opacity-70">{label}</p>
         {icon && <span className="text-xl opacity-80">{icon}</span>}

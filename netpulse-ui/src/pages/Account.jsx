@@ -8,8 +8,8 @@ import Spinner from '../components/ui/Spinner'
 // ── Section card wrapper ──────────────────────────────────────────────────────
 function Section({ title, subtitle, children }) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+    <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+      <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--card-border)' }}>
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
         {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{subtitle}</p>}
       </div>
@@ -24,13 +24,13 @@ function Field({ label, error, className = '', ...props }) {
     <div className="flex flex-col gap-1">
       {label && <label className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</label>}
       <input
-        className={`w-full border rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-gray-800
-          text-gray-900 dark:text-white placeholder-gray-400
-          focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-colors
+        className={`w-full border rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500
+          focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-colors
           ${error
-            ? 'border-red-400 dark:border-red-600'
-            : 'border-gray-300 dark:border-gray-600 focus:border-blue-500'
+            ? 'border-red-400'
+            : 'border-[var(--card-border)] focus:border-[var(--accent)]'
           } ${className}`}
+        style={{ backgroundColor: 'var(--muted-bg)' }}
         {...props}
       />
       {error && <p className="text-xs text-red-500">{error}</p>}
@@ -74,7 +74,7 @@ function EditName({ user, onUpdated, addToast }) {
         <button
           type="submit"
           disabled={loading || name === user?.name}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all"
+          className="flex items-center gap-2 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all" style={{ backgroundColor: 'var(--accent)' }}
         >
           {loading && <Spinner size="sm" />}
           Save name
@@ -161,7 +161,7 @@ function EditEmail({ user, onUpdated, addToast }) {
           <button
             type="submit"
             disabled={loading || code.length !== 6}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all"
+            className="flex items-center gap-2 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all" style={{ backgroundColor: 'var(--accent)' }}
           >
             {loading && <Spinner size="sm" />}
             Confirm new email
@@ -173,7 +173,7 @@ function EditEmail({ user, onUpdated, addToast }) {
 
   return (
     <form onSubmit={handleRequest} className="space-y-4">
-      <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
+      <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--muted-bg)' }}>
         <span className="text-gray-500 dark:text-gray-400">Current email: </span>
         <span className="font-medium text-gray-900 dark:text-white">{user?.email}</span>
       </div>
@@ -197,7 +197,7 @@ function EditEmail({ user, onUpdated, addToast }) {
         <button
           type="submit"
           disabled={loading || !email || !password}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all"
+          className="flex items-center gap-2 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all" style={{ backgroundColor: 'var(--accent)' }}
         >
           {loading && <Spinner size="sm" />}
           Send verification code
@@ -304,7 +304,7 @@ function ChangePassword({ addToast }) {
         <button
           type="submit"
           disabled={loading || !form.current_password || !form.password || !form.password_confirmation}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all"
+          className="flex items-center gap-2 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all" style={{ backgroundColor: 'var(--accent)' }}
         >
           {loading && <Spinner size="sm" />}
           Change password
@@ -364,7 +364,7 @@ function AgentToken({ addToast }) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        Use this token in your local agent's <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded text-xs">.env</code> as <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded text-xs">API_TOKEN</code>.
+        Use this token in your local agent's <code className="px-1 rounded text-xs" style={{ backgroundColor: 'var(--muted-bg)' }}>.env</code> as <code className="px-1 rounded text-xs" style={{ backgroundColor: 'var(--muted-bg)' }}>API_TOKEN</code>.
         It never expires and is independent of your login session.
       </p>
 
@@ -374,12 +374,13 @@ function AgentToken({ addToast }) {
             Copy this token now — it won't be shown again.
           </div>
           <div className="flex gap-2 items-start">
-            <code className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2.5 text-xs font-mono text-gray-800 dark:text-gray-200 break-all leading-relaxed">
+            <code className="flex-1 rounded-lg px-3 py-2.5 text-xs font-mono text-gray-200 break-all leading-relaxed" style={{ backgroundColor: 'var(--muted-bg)' }}>
               {newToken}
             </code>
             <button
               onClick={copy}
-              className="shrink-0 px-3 py-2.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+              className="shrink-0 px-3 py-2.5 text-sm font-medium rounded-lg border text-gray-300 transition-colors hover:bg-[var(--muted-bg)]"
+              style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
             >
               {copied ? '✓ Copied' : 'Copy'}
             </button>
@@ -390,9 +391,9 @@ function AgentToken({ addToast }) {
       {!newToken && hasToken !== null && (
         <div className={`text-sm px-4 py-3 rounded-lg border ${
           hasToken
-            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
-            : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500'
-        }`}>
+            ? 'border-green-800 text-green-300'
+            : 'text-gray-400'
+        }`} style={{ backgroundColor: hasToken ? 'rgba(21, 128, 61, 0.2)' : 'var(--muted-bg)', borderColor: hasToken ? undefined : 'var(--card-border)' }}>
           {hasToken ? '✓ An agent token is active.' : 'No agent token generated yet.'}
         </div>
       )}
@@ -401,7 +402,7 @@ function AgentToken({ addToast }) {
         <button
           onClick={generate}
           disabled={loading}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all"
+          className="flex items-center gap-2 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all" style={{ backgroundColor: 'var(--accent)' }}
         >
           {loading && <Spinner size="sm" />}
           {hasToken ? 'Regenerate token' : 'Generate token'}
@@ -441,7 +442,7 @@ export default function Account() {
       />
 
       {/* Profile summary */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex items-center gap-4">
+      <div className="rounded-xl border p-5 flex items-center gap-4" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
         <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0" style={{ backgroundColor: 'var(--accent)' }}>
           {currentUser?.name?.[0]?.toUpperCase() ?? 'U'}
         </div>

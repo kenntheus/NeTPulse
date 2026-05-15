@@ -37,10 +37,9 @@ export default function AlertList({ alerts = [], onMarkRead, onDelete, compact =
             className={[
               'flex items-start gap-3 rounded-xl border transition-all',
               compact ? 'px-4 py-3' : 'px-5 py-4',
-              !alert.is_read
-                ? 'border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-900/10'
-                : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 opacity-60',
+              !alert.is_read ? 'border-blue-800 bg-blue-900/10' : 'opacity-60',
             ].join(' ')}
+            style={alert.is_read ? { backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' } : undefined}
           >
             {/* Icon */}
             <span className="text-lg flex-shrink-0 mt-0.5" role="img" aria-label={cfg.label}>

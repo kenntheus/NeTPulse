@@ -5,6 +5,9 @@
 :root {
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
+  --card-bg: #111827;
+  --card-border: #1f2937;
+  --muted-bg: #1f2937;
 }
 
 @layer base {

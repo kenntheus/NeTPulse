@@ -119,7 +119,8 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
             <select
               value={form.type}
               onChange={set('type')}
-              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             >
               {groups.map(group => (
                 <optgroup key={group} label={`── ${group}`}>
@@ -149,7 +150,7 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
         />
       </div>
 
-      <div className="flex gap-3 mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex gap-3 mt-6 pt-5 border-t" style={{ borderColor: 'var(--card-border)' }}>
         <Button type="submit" loading={loading} className="flex-1 justify-center">
           {submitLabel}
         </Button>

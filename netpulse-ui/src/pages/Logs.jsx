@@ -62,14 +62,15 @@ export default function Logs() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      <div className="rounded-xl border p-4" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">Device *</label>
             <select
               value={filters.device_id}
               onChange={e => setFilters(f => ({ ...f, device_id: e.target.value }))}
-              className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+            style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             >
               <option value="">Select device...</option>
               {devices.map(d => <option key={d.id} value={d.id}>{d.name} ({d.ip_address})</option>)}
@@ -80,7 +81,8 @@ export default function Logs() {
             <select
               value={filters.status}
               onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
-              className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             >
               <option value="">All</option>
               <option value="online">Online</option>
@@ -90,13 +92,15 @@ export default function Logs() {
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">From</label>
             <input type="date" value={filters.from} onChange={e => setFilters(f => ({ ...f, from: e.target.value }))}
-              className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">To</label>
             <input type="date" value={filters.to} onChange={e => setFilters(f => ({ ...f, to: e.target.value }))}
-              className="w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             />
           </div>
         </div>
@@ -113,11 +117,11 @@ export default function Logs() {
         : logs.length === 0 && !loading
           ? <EmptyState icon="≡" title="No logs" description="Select a device and click Search logs." />
           : (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-gray-50 dark:bg-gray-800 text-xs text-gray-500 uppercase tracking-wide">
+                    <tr className="text-xs text-gray-400 uppercase tracking-wide" style={{ backgroundColor: 'var(--muted-bg)' }}>
                       {['#', 'Status', 'Latency', 'Checked at'].map(h => (
                         <th key={h} className="py-3 px-4 text-left font-medium">{h}</th>
                       ))}
@@ -125,7 +129,7 @@ export default function Logs() {
                   </thead>
                   <tbody>
                     {logs.map((log, i) => (
-                      <tr key={log.id} className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/40">
+                      <tr key={log.id} className="border-t hover:bg-[var(--muted-bg)]" style={{ borderColor: 'var(--card-border)' }}>
                         <td className="py-2.5 px-4 text-gray-400 text-xs">{log.id}</td>
                         <td className="py-2.5 px-4">
                           <Badge variant={log.status}>{log.status}</Badge>
@@ -147,7 +151,7 @@ export default function Logs() {
 
               {/* Pagination */}
               {meta && meta.last_page > 1 && (
-                <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-sm text-gray-500">
+                <div className="px-4 py-3 border-t flex items-center justify-between text-sm text-gray-400" style={{ borderColor: 'var(--card-border)' }}>
                   <span>Page {meta.current_page} of {meta.last_page} · {meta.total} entries</span>
                   <div className="flex gap-2">
                     <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => fetchLogs(page - 1)}>← Prev</Button>
