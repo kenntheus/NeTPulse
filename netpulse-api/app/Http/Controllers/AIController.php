@@ -17,10 +17,34 @@ class AiController extends Controller
 
     public function insights(): JsonResponse
     {
+        $errors = [];
+
+        try {
+            $anomalies = $this->anomaly->getAllBaselines();
+        } catch (\Throwable $e) {
+            $anomalies = [];
+            $errors['anomalies'] = $e->getMessage();
+        }
+
+        try {
+            $fingerprints = $this->fingerprint->fingerprintAll();
+        } catch (\Throwable $e) {
+            $fingerprints = [];
+            $errors['fingerprints'] = $e->getMessage();
+        }
+
+        try {
+            $grouping = $this->grouping->getGroupingStats();
+        } catch (\Throwable $e) {
+            $grouping = [];
+            $errors['grouping'] = $e->getMessage();
+        }
+
         return response()->json([
-            'anomalies'   => $this->anomaly->getAllBaselines(),
-            'fingerprints' => $this->fingerprint->fingerprintAll(),
-            'grouping'    => $this->grouping->getGroupingStats(),
+            'anomalies'    => $anomalies,
+            'fingerprints' => $fingerprints,
+            'grouping'     => $grouping,
+            'errors'       => $errors ?: null,
         ]);
     }
 
