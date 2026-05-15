@@ -28,19 +28,11 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: MAIL_MAILER
-        value: smtp
-      - key: MAIL_HOST
-        value: smtp.gmail.com
-      - key: MAIL_PORT
-        value: 465
-      - key: MAIL_SCHEME
-        value: ssl
-      - key: MAIL_USERNAME
-        sync: false
-      - key: MAIL_PASSWORD
+        value: resend
+      - key: RESEND_API_KEY
         sync: false
       - key: MAIL_FROM_ADDRESS
-        sync: false
+        value: onboarding@resend.dev
       - key: MAIL_FROM_NAME
         value: NetPulse
       - key: CACHE_STORE
