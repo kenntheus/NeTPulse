@@ -23,9 +23,9 @@ use Illuminate\Support\Facades\Http;
  */
 class ArpScannerService
 {
-    public function scan(): array
+    public function scan(array $preScannedEntries = null): array
     {
-        $arpEntries = $this->parseArpTable();
+        $arpEntries = $preScannedEntries ?? $this->parseArpTable();
 
         if (empty($arpEntries)) {
             Log::warning('[ARP] No entries found.');

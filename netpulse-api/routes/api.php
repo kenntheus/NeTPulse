@@ -48,7 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/alerts/read-all',      [AlertController::class, 'markAllRead']);
     Route::delete('/alerts/{alert}',     [AlertController::class, 'destroy']);
 
-    Route::post('/arp/scan', [ArpScanController::class, 'scan']);
+    Route::post('/arp/scan',        [ArpScanController::class, 'scan']);
+    Route::post('/agent/push',      [ArpScanController::class, 'receivePush']);
 
     Route::prefix('ai')->group(function () {
         Route::get('/insights',     [AiController::class, 'insights']);
