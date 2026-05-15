@@ -97,6 +97,30 @@ class AccountController extends Controller
         ]);
     }
 
+    public function agentTokenStatus(Request $request): JsonResponse
+    {
+        $hasToken = $request->user()->tokens()->where('name', 'agent-token')->exists();
+        return response()->json(['has_token' => $hasToken]);
+    }
+
+    public function generateAgentToken(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->tokens()->where('name', 'agent-token')->delete();
+        $token = $user->createToken('agent-token');
+
+        return response()->json([
+            'token'   => $token->plainTextToken,
+            'message' => 'Agent token generated.',
+        ]);
+    }
+
+    public function revokeAgentToken(Request $request): JsonResponse
+    {
+        $request->user()->tokens()->where('name', 'agent-token')->delete();
+        return response()->json(['message' => 'Agent token revoked.']);
+    }
+
     /**
      * Update the authenticated user's password.
      */

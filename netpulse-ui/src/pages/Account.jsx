@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../store/AuthContext'
 import api from '../lib/api'
 import { PageHeader, ToastContainer } from '../components/ui'
@@ -314,6 +314,112 @@ function ChangePassword({ addToast }) {
   )
 }
 
+// ── Agent Token ───────────────────────────────────────────────────────────────
+function AgentToken({ addToast }) {
+  const [hasToken, setHasToken] = useState(null)
+  const [newToken, setNewToken] = useState(null)
+  const [loading,  setLoading]  = useState(false)
+  const [copied,   setCopied]   = useState(false)
+
+  useEffect(() => {
+    api.get('/account/agent-token')
+      .then(r => setHasToken(r.data.has_token))
+      .catch(() => {})
+  }, [])
+
+  const generate = async () => {
+    setLoading(true)
+    try {
+      const { data } = await api.post('/account/agent-token')
+      setNewToken(data.token)
+      setHasToken(true)
+      addToast('Agent token generated — copy it now!', 'success')
+    } catch {
+      addToast('Failed to generate token.', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const revoke = async () => {
+    setLoading(true)
+    try {
+      await api.delete('/account/agent-token')
+      setHasToken(false)
+      setNewToken(null)
+      addToast('Agent token revoked.', 'success')
+    } catch {
+      addToast('Failed to revoke token.', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const copy = () => {
+    navigator.clipboard.writeText(newToken)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Use this token in your local agent's <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded text-xs">.env</code> as <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded text-xs">API_TOKEN</code>.
+        It never expires and is independent of your login session.
+      </p>
+
+      {newToken && (
+        <div className="space-y-2">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+            Copy this token now — it won't be shown again.
+          </div>
+          <div className="flex gap-2 items-start">
+            <code className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2.5 text-xs font-mono text-gray-800 dark:text-gray-200 break-all leading-relaxed">
+              {newToken}
+            </code>
+            <button
+              onClick={copy}
+              className="shrink-0 px-3 py-2.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+            >
+              {copied ? '✓ Copied' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!newToken && hasToken !== null && (
+        <div className={`text-sm px-4 py-3 rounded-lg border ${
+          hasToken
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300'
+            : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500'
+        }`}>
+          {hasToken ? '✓ An agent token is active.' : 'No agent token generated yet.'}
+        </div>
+      )}
+
+      <div className="flex gap-3">
+        <button
+          onClick={generate}
+          disabled={loading}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all"
+        >
+          {loading && <Spinner size="sm" />}
+          {hasToken ? 'Regenerate token' : 'Generate token'}
+        </button>
+        {hasToken && (
+          <button
+            onClick={revoke}
+            disabled={loading}
+            className="flex items-center gap-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 font-medium rounded-lg px-4 py-2 text-sm transition-all"
+          >
+            Revoke
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main Account Settings page ────────────────────────────────────────────────
 export default function Account() {
   const { user, logout, isAdmin }   = useAuth()
@@ -374,6 +480,11 @@ export default function Account() {
         subtitle="Use a strong password with at least 8 characters"
       >
         <ChangePassword addToast={addToast} />
+      </Section>
+
+      {/* Agent token */}
+      <Section title="Agent Token" subtitle="Generate a persistent token for the NetPulse local agent">
+        <AgentToken addToast={addToast} />
       </Section>
 
       {/* Danger zone */}

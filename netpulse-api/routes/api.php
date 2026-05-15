@@ -24,6 +24,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/email', [App\Http\Controllers\AccountController::class, 'requestEmailUpdate']);
         Route::post('/verify-email-change', [App\Http\Controllers\AccountController::class, 'verifyEmailChange']);
         Route::patch('/password', [App\Http\Controllers\AccountController::class, 'updatePassword']);
+        Route::get('/agent-token',    [App\Http\Controllers\AccountController::class, 'agentTokenStatus']);
+        Route::post('/agent-token',   [App\Http\Controllers\AccountController::class, 'generateAgentToken']);
+        Route::delete('/agent-token', [App\Http\Controllers\AccountController::class, 'revokeAgentToken']);
     });
 
     Route::prefix('auth')->group(function () {
