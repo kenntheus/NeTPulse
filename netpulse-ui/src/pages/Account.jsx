@@ -314,6 +314,137 @@ function ChangePassword({ addToast }) {
   )
 }
 
+// ── Code block with copy button ───────────────────────────────────────────────
+function CodeBlock({ code }) {
+  const [copied, setCopied] = useState(false)
+  const doCopy = () => {
+    navigator.clipboard.writeText(code)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <div className="relative group rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--muted-bg)' }}>
+      <pre className="px-4 py-3 text-xs font-mono text-gray-200 overflow-x-auto whitespace-pre leading-relaxed">{code}</pre>
+      <button
+        onClick={doCopy}
+        className="absolute top-2 right-2 px-2 py-1 text-xs rounded-md text-gray-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+        style={{ backgroundColor: 'var(--card-border)' }}
+      >
+        {copied ? '✓' : 'Copy'}
+      </button>
+    </div>
+  )
+}
+
+// ── Setup guide ───────────────────────────────────────────────────────────────
+const API_URL = 'https://netpulse-1.onrender.com'
+const REPO    = 'https://github.com/Kenntheus/NeTPulse.git'
+
+function SetupGuide({ token }) {
+  const [tab, setTab] = useState('windows')
+  const t = token ?? '<YOUR_TOKEN>'
+
+  const envContent = `API_URL=${API_URL}\nAPI_TOKEN=${t}\nINTERVAL=30`
+
+  const steps = {
+    windows: [
+      {
+        label: 'Install Node.js (if not already installed)',
+        code: '# Download from: https://nodejs.org  (LTS version)',
+        note: 'Open a new PowerShell window after installing.',
+      },
+      {
+        label: 'Clone the repository and enter the agent folder',
+        code: `git clone ${REPO}\ncd NeTPulse\\netpulse-agent`,
+      },
+      {
+        label: 'Create the .env config file — paste this content into a new file named .env',
+        code: envContent,
+        note: 'Save it as .env (no extension) inside the netpulse-agent folder.',
+      },
+      {
+        label: 'Install dependencies and start the agent',
+        code: 'npm install\nnode agent.js',
+      },
+    ],
+    unix: [
+      {
+        label: 'Install Node.js (if not already installed)',
+        code: '# Download from: https://nodejs.org  (LTS version)',
+        note: 'Or use nvm: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash',
+      },
+      {
+        label: 'Clone the repository and enter the agent folder',
+        code: `git clone ${REPO}\ncd NeTPulse/netpulse-agent`,
+      },
+      {
+        label: "Create the .env config file",
+        code: `cat > .env << 'EOF'\n${envContent}\nEOF`,
+      },
+      {
+        label: 'Install dependencies and start the agent',
+        code: 'npm install && node agent.js',
+      },
+    ],
+  }
+
+  const current = steps[tab]
+
+  return (
+    <div className="space-y-4 pt-2 border-t" style={{ borderColor: 'var(--card-border)' }}>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-white">Setup Guide</p>
+        {!token && (
+          <span className="text-xs text-amber-400 bg-amber-900/20 border border-amber-800/40 px-2 py-0.5 rounded-md">
+            Regenerate token to pre-fill commands
+          </span>
+        )}
+      </div>
+
+      {/* OS tabs */}
+      <div className="flex gap-1 p-1 rounded-lg w-fit" style={{ backgroundColor: 'var(--muted-bg)' }}>
+        {[{ id: 'windows', label: '🪟 Windows' }, { id: 'unix', label: '🍎 macOS / Linux' }].map(os => (
+          <button
+            key={os.id}
+            onClick={() => setTab(os.id)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              tab === os.id ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+            }`}
+            style={tab === os.id ? { backgroundColor: 'var(--card-bg)' } : undefined}
+          >
+            {os.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Steps */}
+      <div className="space-y-4">
+        {current.map((step, i) => (
+          <div key={i} className="space-y-1.5">
+            <p className="text-xs font-medium text-gray-300">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-xs mr-1.5 font-bold" style={{ backgroundColor: 'var(--accent)' }}>
+                {i + 1}
+              </span>
+              {step.label}
+            </p>
+            <CodeBlock code={step.code} />
+            {step.note && (
+              <p className="text-xs text-gray-500 pl-1">{step.note}</p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* PM2 tip */}
+      <div className="rounded-lg px-4 py-3 text-xs text-gray-400 border" style={{ backgroundColor: 'rgba(217,119,6,0.08)', borderColor: 'rgba(217,119,6,0.25)' }}>
+        <p className="font-medium text-amber-400 mb-1">💡 Keep it running 24/7</p>
+        <p className="mb-2">Install PM2 to run the agent as a background service that survives reboots:</p>
+        <CodeBlock code={'npm install -g pm2\npm2 start agent.js --name netpulse-agent\npm2 startup   # auto-start on reboot\npm2 save'} />
+      </div>
+    </div>
+  )
+}
+
 // ── Agent Token ───────────────────────────────────────────────────────────────
 function AgentToken({ addToast }) {
   const [hasToken, setHasToken] = useState(null)
@@ -363,15 +494,16 @@ function AgentToken({ addToast }) {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        Use this token in your local agent's <code className="px-1 rounded text-xs" style={{ backgroundColor: 'var(--muted-bg)' }}>.env</code> as <code className="px-1 rounded text-xs" style={{ backgroundColor: 'var(--muted-bg)' }}>API_TOKEN</code>.
-        It never expires and is independent of your login session.
+      <p className="text-sm text-gray-500">
+        Generate a persistent token for the local agent that monitors your network.
+        It never expires and is separate from your login session.
       </p>
 
+      {/* Token display — shown only when freshly generated */}
       {newToken && (
         <div className="space-y-2">
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
-            Copy this token now — it won't be shown again.
+          <div className="rounded-lg px-4 py-3 text-sm text-amber-300 border" style={{ backgroundColor: 'rgba(217,119,6,0.12)', borderColor: 'rgba(217,119,6,0.35)' }}>
+            ⚠️ Copy this token now — it will not be shown again.
           </div>
           <div className="flex gap-2 items-start">
             <code className="flex-1 rounded-lg px-3 py-2.5 text-xs font-mono text-gray-200 break-all leading-relaxed" style={{ backgroundColor: 'var(--muted-bg)' }}>
@@ -388,21 +520,25 @@ function AgentToken({ addToast }) {
         </div>
       )}
 
+      {/* Status badge when no fresh token */}
       {!newToken && hasToken !== null && (
         <div className={`text-sm px-4 py-3 rounded-lg border ${
-          hasToken
-            ? 'border-green-800 text-green-300'
-            : 'text-gray-400'
-        }`} style={{ backgroundColor: hasToken ? 'rgba(21, 128, 61, 0.2)' : 'var(--muted-bg)', borderColor: hasToken ? undefined : 'var(--card-border)' }}>
+          hasToken ? 'border-green-800 text-green-300' : 'text-gray-400'
+        }`} style={{
+          backgroundColor: hasToken ? 'rgba(21,128,61,0.2)' : 'var(--muted-bg)',
+          borderColor: hasToken ? undefined : 'var(--card-border)',
+        }}>
           {hasToken ? '✓ An agent token is active.' : 'No agent token generated yet.'}
         </div>
       )}
 
+      {/* Actions */}
       <div className="flex gap-3">
         <button
           onClick={generate}
           disabled={loading}
-          className="flex items-center gap-2 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all" style={{ backgroundColor: 'var(--accent)' }}
+          className="flex items-center gap-2 disabled:opacity-50 text-white font-medium rounded-lg px-4 py-2 text-sm transition-all"
+          style={{ backgroundColor: 'var(--accent)' }}
         >
           {loading && <Spinner size="sm" />}
           {hasToken ? 'Regenerate token' : 'Generate token'}
@@ -411,12 +547,15 @@ function AgentToken({ addToast }) {
           <button
             onClick={revoke}
             disabled={loading}
-            className="flex items-center gap-2 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 font-medium rounded-lg px-4 py-2 text-sm transition-all"
+            className="flex items-center gap-2 border border-red-800 text-red-400 hover:bg-red-900/20 disabled:opacity-50 font-medium rounded-lg px-4 py-2 text-sm transition-all"
           >
             Revoke
           </button>
         )}
       </div>
+
+      {/* Setup guide — always visible once token exists */}
+      {hasToken && <SetupGuide token={newToken} />}
     </div>
   )
 }
@@ -484,7 +623,7 @@ export default function Account() {
       </Section>
 
       {/* Agent token */}
-      <Section title="Agent Token" subtitle="Generate a persistent token for the NetPulse local agent">
+      <Section title="Agent Token" subtitle="Generate a token and follow the setup guide to monitor your local network">
         <AgentToken addToast={addToast} />
       </Section>
 
