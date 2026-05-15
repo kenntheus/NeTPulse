@@ -49,3 +49,5 @@ services:
         value: file
       - key: QUEUE_CONNECTION
         value: sync
+      - key: LOG_CHANNEL
+        value: stderr

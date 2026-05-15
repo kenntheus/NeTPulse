@@ -28,14 +28,17 @@ class DashboardController extends Controller
         $hours    = min((int) $request->query('hours', 24), 168);
         $deviceId = $request->query('device_id');
 
-        $timeExpr = "FROM_UNIXTIME(FLOOR(UNIX_TIMESTAMP(checked_at) / 300) * 300, '%m-%d %H:%i')";
+        $bucket = "FLOOR(UNIX_TIMESTAMP(checked_at) / 300)";
 
         $data = MonitoringLog::when($deviceId, fn($q) => $q->where('device_id', $deviceId))
             ->where('checked_at', '>=', now()->subHours($hours))
             ->where('status', 'online')
-            ->selectRaw("{$timeExpr} as time, ROUND(AVG(latency_ms)) as avg_latency")
-            ->groupByRaw($timeExpr)
-            ->orderByRaw("MIN(checked_at)")
+            ->selectRaw("
+                DATE_FORMAT(FROM_UNIXTIME(({$bucket}) * 300), '%m-%d %H:%i') as time,
+                ROUND(AVG(latency_ms)) as avg_latency
+            ")
+            ->groupByRaw($bucket)
+            ->orderByRaw($bucket)
             ->limit(288)
             ->get();
 
