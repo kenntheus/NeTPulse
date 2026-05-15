@@ -5,9 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\AI\AnomalyDetectionService;
 use App\Services\AI\AlertGroupingService;
 use App\Services\AI\DeviceFingerprintService;
-use App\Services\AI\NetworkAssistantService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class AiController extends Controller
 {
@@ -15,7 +13,6 @@ class AiController extends Controller
         private AnomalyDetectionService  $anomaly,
         private AlertGroupingService     $grouping,
         private DeviceFingerprintService $fingerprint,
-        private NetworkAssistantService  $assistant,
     ) {}
 
     public function insights(): JsonResponse
@@ -37,18 +34,4 @@ class AiController extends Controller
         return response()->json($this->fingerprint->fingerprintAll());
     }
 
-    public function chat(Request $request): JsonResponse
-    {
-        $request->validate([
-            'message' => ['required', 'string', 'max:1000'],
-            'history' => ['nullable', 'array'],
-        ]);
-
-        $reply = $this->assistant->chat(
-            $request->message,
-            $request->history ?? []
-        );
-
-        return response()->json(['reply' => $reply]);
-    }
 }

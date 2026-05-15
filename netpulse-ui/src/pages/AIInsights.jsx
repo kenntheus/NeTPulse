@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import api from '../lib/api'
 import { PageHeader, Card, Badge, LoadingPage, StatCard } from '../components/ui'
 
@@ -13,138 +13,11 @@ const BEHAVIOUR_LABEL = {
 
 const CONFIDENCE_COLOR = { high: 'success', medium: 'warning', low: 'offline', none: 'default' }
 
-// ── Chat widget ───────────────────────────────────────────────────────────────
-function AiChat() {
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: "👋 Hi! I'm NetPulse AI. Ask me anything about your network — device health, latency trends, anomalies, or recommendations." }
-  ])
-  const [input,   setInput]   = useState('')
-  const [loading, setLoading] = useState(false)
-  const bottomRef = useRef(null)
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  const send = async () => {
-    if (!input.trim() || loading) return
-    const userMsg = input.trim()
-    setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }])
-    setLoading(true)
-
-    try {
-      const history = messages.filter(m => m.role !== 'assistant' || messages.indexOf(m) > 0)
-      const { data } = await api.post('/ai/chat', { message: userMsg, history })
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
-    } catch (_) {
-      setMessages(prev => [...prev, { role: 'assistant', content: '❌ Failed to get a response. Check your API key in .env.' }])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const suggestions = [
-    "Which device has the worst uptime?",
-    "Is my network healthy?",
-    "Any anomalies detected?",
-    "What devices are offline?",
-  ]
-
-  return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col h-[500px]">
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
-        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-sm font-bold">
-          AI
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">NetPulse AI Assistant</h3>
-          <p className="text-xs text-gray-500">Powered by Gemini 2.0 Flash Lite · Real network context</p>
-        </div>
-        <span className="ml-auto flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-          Live data
-        </span>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            {msg.role === 'assistant' && (
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold mr-2 flex-shrink-0 mt-0.5">
-                AI
-              </div>
-            )}
-            <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
-              msg.role === 'user'
-                ? 'bg-blue-600 text-white rounded-br-sm'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-sm'
-            }`}>
-              {msg.content}
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div className="flex justify-start">
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold mr-2 flex-shrink-0">
-              AI
-            </div>
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-bl-sm px-4 py-3">
-              <div className="flex gap-1">
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
-      </div>
-
-      {/* Suggestions */}
-      {messages.length === 1 && (
-        <div className="px-5 pb-3 flex flex-wrap gap-2">
-          {suggestions.map(s => (
-            <button key={s} onClick={() => setInput(s)}
-              className="text-xs bg-gray-100 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-1.5 rounded-full transition-colors border border-gray-200 dark:border-gray-700">
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Input */}
-      <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex gap-2">
-        <input
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && send()}
-          placeholder="Ask about your network…"
-          disabled={loading}
-          className="flex-1 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-50"
-        />
-        <button
-          onClick={send}
-          disabled={loading || !input.trim()}
-          className="w-10 h-10 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl flex items-center justify-center transition-all flex-shrink-0"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  )
-}
-
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function AiInsights() {
   const [insights, setInsights] = useState(null)
   const [loading,  setLoading]  = useState(true)
-  const [tab,      setTab]      = useState('chat')
+  const [tab,      setTab]      = useState('anomalies')
 
   useEffect(() => {
     api.get('/ai/insights')
@@ -170,7 +43,7 @@ export default function AiInsights() {
 
       <PageHeader
         title="AI Insights"
-        subtitle="Anomaly detection · Device fingerprinting · Alert grouping · AI assistant"
+        subtitle="Anomaly detection · Device fingerprinting · Alert grouping"
       />
 
       {/* Stats row */}
@@ -184,7 +57,6 @@ export default function AiInsights() {
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl w-fit">
         {[
-          { id: 'chat',         label: '💬 AI Assistant' },
           { id: 'anomalies',    label: '🔺 Anomalies' },
           { id: 'fingerprints', label: '🧬 Fingerprints' },
         ].map(t => (
@@ -200,8 +72,6 @@ export default function AiInsights() {
       </div>
 
       {/* Tab content */}
-      {tab === 'chat' && <AiChat />}
-
       {tab === 'anomalies' && (
         <div className="space-y-4">
           {anomalies.length === 0 ? (

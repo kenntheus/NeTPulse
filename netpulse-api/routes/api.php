@@ -55,6 +55,5 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/insights',     [AiController::class, 'insights']);
         Route::get('/anomalies',    [AiController::class, 'anomalies']);
         Route::get('/fingerprints', [AiController::class, 'fingerprints']);
-        Route::post('/chat',        [AiController::class, 'chat']);
     });
 });
