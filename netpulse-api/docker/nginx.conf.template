@@ -4,6 +4,15 @@ server {
     index index.php;
     client_max_body_size 20M;
 
+    # Handle OPTIONS preflight before anything else
+    if ($request_method = OPTIONS) {
+        add_header 'Access-Control-Allow-Origin'  '${FRONTEND_URL}';
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
+        add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, Accept, X-Requested-With';
+        add_header 'Access-Control-Max-Age' 86400;
+        return 204;
+    }
+
     location / {
         try_files $uri $uri/ /index.php?$query_string;
     }
@@ -14,6 +23,17 @@ server {
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         include fastcgi_params;
         fastcgi_read_timeout 300;
+
+        # Strip Laravel's CORS headers so nginx's don't duplicate
+        fastcgi_hide_header 'Access-Control-Allow-Origin';
+        fastcgi_hide_header 'Access-Control-Allow-Methods';
+        fastcgi_hide_header 'Access-Control-Allow-Headers';
+        fastcgi_hide_header 'Access-Control-Max-Age';
+
+        # Re-add CORS on every PHP response, including 500s
+        add_header 'Access-Control-Allow-Origin'  '${FRONTEND_URL}' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, PATCH, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, Accept, X-Requested-With' always;
     }
 
     location ~ /\.(?!well-known).* {
