@@ -4,15 +4,6 @@ server {
     index index.php;
     client_max_body_size 20M;
 
-    # Dynamically reflect the origin if it matches an allowed pattern
-    set $allow_origin "";
-    if ($http_origin ~ "\.vercel\.app$") {
-        set $allow_origin $http_origin;
-    }
-    if ($http_origin ~ "^http://localhost") {
-        set $allow_origin $http_origin;
-    }
-
     location / {
         if ($request_method = OPTIONS) {
             add_header 'Access-Control-Allow-Origin'  $allow_origin;
@@ -31,13 +22,11 @@ server {
         include fastcgi_params;
         fastcgi_read_timeout 300;
 
-        # Strip Laravel's CORS headers to prevent duplicates
         fastcgi_hide_header 'Access-Control-Allow-Origin';
         fastcgi_hide_header 'Access-Control-Allow-Methods';
         fastcgi_hide_header 'Access-Control-Allow-Headers';
         fastcgi_hide_header 'Access-Control-Max-Age';
 
-        # Re-add with the correct dynamic origin
         add_header 'Access-Control-Allow-Origin'  $allow_origin always;
         add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, PATCH, DELETE, OPTIONS' always;
         add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, Accept, X-Requested-With' always;

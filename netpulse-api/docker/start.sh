@@ -18,9 +18,9 @@ php artisan view:cache  2>&1 || true
 
 echo "==> Building nginx config..."
 PORT=${PORT:-8000}
-FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
-export PORT FRONTEND_URL
-envsubst '${PORT} ${FRONTEND_URL}' \
+export PORT
+cp /var/www/docker/nginx.cors.conf /etc/nginx/conf.d/cors_map.conf
+envsubst '${PORT}' \
     < /var/www/docker/nginx.conf.template \
     > /etc/nginx/conf.d/app.conf
 
