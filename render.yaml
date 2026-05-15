@@ -51,3 +51,5 @@ services:
         value: sync
       - key: LOG_CHANNEL
         value: stderr
+      - key: MYSQL_ATTR_SSL_CA
+        value: /etc/ssl/certs/ca-certificates.crt
