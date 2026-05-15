@@ -24,7 +24,7 @@ services:
       - key: DB_PASSWORD
         sync: false
       - key: FRONTEND_URL
-        sync: false
+        value: https://ne-t-pulse.vercel.app
       - key: GEMINI_API_KEY
         sync: false
       - key: MAIL_MAILER
