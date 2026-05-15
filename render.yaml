@@ -33,8 +33,8 @@ services:
         value: smtp.gmail.com
       - key: MAIL_PORT
         value: 465
-      - key: MAIL_ENCRYPTION
-        value: tls
+      - key: MAIL_SCHEME
+        value: ssl
       - key: MAIL_USERNAME
         sync: false
       - key: MAIL_PASSWORD
