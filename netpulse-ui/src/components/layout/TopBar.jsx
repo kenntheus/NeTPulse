@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../store/AuthContext'
-import ThemeToggle from './ThemeToggle'
 import AlertBadge from '../alerts/AlertBadge'
 import { Badge } from '../ui'
 
@@ -66,9 +65,6 @@ export default function TopBar() {
         {/* Right — actions */}
         <div className="flex items-center gap-1 flex-shrink-0">
 
-          {/* Theme toggle */}
-          <ThemeToggle />
-
           {/* Alert bell */}
           <AlertBadge />
 
@@ -82,7 +78,10 @@ export default function TopBar() {
               className="flex items-center gap-2 pl-1 rounded-lg px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               {/* Avatar */}
-              <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                style={{ backgroundColor: 'var(--accent)' }}
+              >
                 {user?.name?.[0]?.toUpperCase() ?? 'U'}
               </div>
               <div className="hidden sm:block text-left">

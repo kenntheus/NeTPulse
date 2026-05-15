@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../store/AuthContext'
-import { useDarkMode } from '../../hooks/useDarkMode'
+import { useTheme, THEMES } from '../../hooks/useTheme'
 
 const navItems = [
   { to: '/',        label: 'Dashboard',   icon: (
@@ -30,9 +31,56 @@ const navItems = [
   )},
 ]
 
+function AppearancePanel() {
+  const [theme, setTheme] = useTheme()
+  const [open, setOpen]   = useState(false)
+  const current = THEMES.find(t => t.id === theme) ?? THEMES[0]
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-gray-400 hover:text-white hover:bg-gray-800"
+      >
+        {/* Palette icon */}
+        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+        </svg>
+        <span className="flex-1 text-left">Appearance</span>
+        {/* Current color dot */}
+        <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: current.accent }} />
+      </button>
+
+      {open && (
+        <div className="mx-3 mb-1 p-3 rounded-lg bg-gray-800 space-y-2.5">
+          <p className="text-xs text-gray-400 font-medium">Accent color</p>
+          <div className="flex gap-2 flex-wrap">
+            {THEMES.map(t => (
+              <button
+                key={t.id}
+                title={t.label}
+                onClick={() => setTheme(t.id)}
+                className="w-7 h-7 rounded-full transition-all hover:scale-110 focus:outline-none"
+                style={{
+                  backgroundColor: t.accent,
+                  boxShadow: theme === t.id
+                    ? `0 0 0 2px #1f2937, 0 0 0 4px ${t.accent}`
+                    : 'none',
+                }}
+              />
+            ))}
+          </div>
+          <p className="text-xs text-gray-500">{current.label}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Sidebar() {
   const { user, logout, isAdmin } = useAuth()
-  const [dark, setDark]           = useDarkMode()
+  const [theme]                   = useTheme()
   const navigate                  = useNavigate()
 
   const handleLogout = async () => {
@@ -41,12 +89,15 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-60 min-h-screen flex flex-col border-r bg-gray-900 border-gray-800 dark:bg-gray-950 dark:border-gray-800">
+    <aside className="w-60 min-h-screen flex flex-col border-r bg-gray-900 border-gray-800">
 
       {/* Logo */}
       <div className="px-5 py-5 border-b border-gray-800">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">N</div>
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+            style={{ backgroundColor: 'var(--accent)' }}
+          >N</div>
           <div>
             <span className="text-white font-semibold tracking-tight text-sm">NetPulse</span>
             <p className="text-gray-500 text-xs">Network Monitor</p>
@@ -56,7 +107,7 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {navItems.map(({ to, label, icon, badge }) => (
+        {navItems.map(({ to, label, icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -64,43 +115,31 @@ export default function Sidebar() {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
                 isActive
-                  ? 'bg-blue-600 text-white'
+                  ? 'text-white'
                   : 'text-gray-400 hover:text-white hover:bg-gray-800'
               }`
+            }
+            style={({ isActive }) =>
+              isActive ? { backgroundColor: 'var(--accent)' } : undefined
             }
           >
             {icon}
             <span className="flex-1">{label}</span>
-            {badge && (
-              <span className="bg-blue-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                {badge}
-              </span>
-            )}
           </NavLink>
         ))}
       </nav>
 
       {/* Bottom */}
       <div className="px-3 py-4 border-t border-gray-800 space-y-2">
-        <button
-          onClick={() => setDark(!dark)}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-gray-400 hover:text-white hover:bg-gray-800"
-        >
-          {dark ? (
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-            </svg>
-          ) : (
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-          )}
-          <span>{dark ? 'Light mode' : 'Dark mode'}</span>
-        </button>
 
-        <div className="px-3 py-2.5 rounded-lg bg-gray-800 dark:bg-gray-900">
+        <AppearancePanel />
+
+        <div className="px-3 py-2.5 rounded-lg bg-gray-800">
           <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+              style={{ backgroundColor: 'var(--accent)' }}
+            >
               {user?.name?.[0]?.toUpperCase() ?? 'U'}
             </div>
             <div className="min-w-0">
@@ -110,7 +149,7 @@ export default function Sidebar() {
           </div>
           <div className="flex items-center justify-between">
             <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-              isAdmin() ? 'bg-purple-900/60 text-purple-300' : 'bg-blue-900/60 text-blue-300'
+              isAdmin() ? 'bg-purple-900/60 text-purple-300' : 'bg-gray-700 text-gray-300'
             }`}>
               {user?.role}
             </span>

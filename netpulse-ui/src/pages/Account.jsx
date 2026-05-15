@@ -442,7 +442,7 @@ export default function Account() {
 
       {/* Profile summary */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5 flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
+        <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0" style={{ backgroundColor: 'var(--accent)' }}>
           {currentUser?.name?.[0]?.toUpperCase() ?? 'U'}
         </div>
         <div>
