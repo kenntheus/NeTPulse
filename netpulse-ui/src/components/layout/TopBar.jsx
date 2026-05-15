@@ -47,7 +47,7 @@ export default function TopBar() {
   }
 
   return (
-    <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 px-6 py-3">
+    <header className="sticky top-0 z-30 backdrop-blur-sm border-b border-white/5 px-6 py-3" style={{ backgroundColor: 'color-mix(in srgb, var(--content-bg) 80%, transparent)' }}>
       <div className="flex items-center justify-between gap-4">
 
         {/* Left — page title */}

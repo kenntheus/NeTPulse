@@ -7,6 +7,7 @@ export const THEMES = [
     sidebarBg:     '#111827',
     sidebarBorder: '#1f2937',
     sidebarCard:   '#1f2937',
+    contentBg:     '#030712',
     accent:        '#2563eb',
     hover:         '#1d4ed8',
   },
@@ -16,6 +17,7 @@ export const THEMES = [
     sidebarBg:     '#0c1e35',
     sidebarBorder: '#163050',
     sidebarCard:   '#102845',
+    contentBg:     '#04101e',
     accent:        '#0ea5e9',
     hover:         '#0284c7',
   },
@@ -25,6 +27,7 @@ export const THEMES = [
     sidebarBg:     '#0f2018',
     sidebarBorder: '#1a3526',
     sidebarCard:   '#1a3526',
+    contentBg:     '#050f07',
     accent:        '#10b981',
     hover:         '#059669',
   },
@@ -34,6 +37,7 @@ export const THEMES = [
     sidebarBg:     '#1a0d2e',
     sidebarBorder: '#2d1a4a',
     sidebarCard:   '#2d1a4a',
+    contentBg:     '#09041a',
     accent:        '#8b5cf6',
     hover:         '#7c3aed',
   },
@@ -43,6 +47,7 @@ export const THEMES = [
     sidebarBg:     '#2a1206',
     sidebarBorder: '#3d1c0a',
     sidebarCard:   '#3d1c0a',
+    contentBg:     '#110701',
     accent:        '#f97316',
     hover:         '#ea580c',
   },
@@ -52,6 +57,7 @@ export const THEMES = [
     sidebarBg:     '#2a0d14',
     sidebarBorder: '#3d1520',
     sidebarCard:   '#3d1520',
+    contentBg:     '#11030a',
     accent:        '#f43f5e',
     hover:         '#e11d48',
   },
@@ -72,6 +78,7 @@ function apply(themeId) {
   root.style.setProperty('--sidebar-bg',     t.sidebarBg)
   root.style.setProperty('--sidebar-border', t.sidebarBorder)
   root.style.setProperty('--sidebar-card',   t.sidebarCard)
+  root.style.setProperty('--content-bg',     t.contentBg)
 }
 
 export function useTheme() {
