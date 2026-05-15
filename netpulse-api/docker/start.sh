@@ -1,5 +1,9 @@
 #!/bin/sh
 
+echo "==> Fixing storage permissions..."
+chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache 2>/dev/null || \
+    chmod -R 777 /var/www/storage /var/www/bootstrap/cache
+
 echo "==> Running migrations..."
 php artisan package:discover --ansi 2>&1 || true
 php artisan migrate --force 2>&1
