@@ -77,9 +77,7 @@ export default function AlertBadge() {
       {/* Bell button */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="relative w-9 h-9 flex items-center justify-center rounded-lg transition-all
-          text-gray-500 hover:text-gray-700 hover:bg-gray-100
-          dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800"
+        className="relative w-9 h-9 flex items-center justify-center rounded-lg transition-all text-gray-400 hover:text-gray-200 hover:bg-[var(--muted-bg)]"
         title="Notifications"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,12 +93,12 @@ export default function AlertBadge() {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-11 w-80 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+        <div className="absolute right-0 top-11 w-80 rounded-xl shadow-2xl border z-50 overflow-hidden" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
 
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+          <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--card-border)' }}>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
+              <h3 className="text-sm font-semibold text-white">Notifications</h3>
               {count > 0 && (
                 <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
                   {count}
@@ -110,7 +108,7 @@ export default function AlertBadge() {
             {count > 0 && (
               <button
                 onClick={markAllRead}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                className="text-xs font-medium hover:underline" style={{ color: 'var(--accent)' }}
               >
                 Mark all read
               </button>
@@ -135,14 +133,15 @@ export default function AlertBadge() {
               alerts.map(alert => (
                 <div
                   key={alert.id}
-                  className={`flex items-start gap-3 px-4 py-3 border-b border-gray-50 dark:border-gray-800 last:border-0 transition-colors
-                    ${!alert.is_read ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/40'}`}
+                  className={`flex items-start gap-3 px-4 py-3 border-b last:border-0 transition-colors
+                    ${!alert.is_read ? 'bg-blue-900/10' : 'hover:bg-[var(--muted-bg)]'}`}
+                  style={{ borderColor: 'var(--card-border)' }}
                 >
                   <span className="text-base flex-shrink-0 mt-0.5">
                     {TYPE_ICON[alert.type] ?? '🔔'}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-700 dark:text-gray-300 leading-snug line-clamp-2">
+                    <p className="text-xs text-gray-300 leading-snug line-clamp-2">
                       {alert.message}
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
@@ -164,11 +163,11 @@ export default function AlertBadge() {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-2.5 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+          <div className="px-4 py-2.5 border-t" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--muted-bg)' }}>
             <Link
               to="/alerts"
               onClick={() => setOpen(false)}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              className="text-xs font-medium hover:underline" style={{ color: 'var(--accent)' }}
             >
               View all alerts →
             </Link>
