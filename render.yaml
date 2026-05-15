@@ -2,6 +2,7 @@ services:
   - type: web
     name: netpulse-api
     runtime: php
+    rootDir: netpulse-api
     buildCommand: composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache && php artisan view:cache
     startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
