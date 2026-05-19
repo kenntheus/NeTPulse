@@ -42,13 +42,13 @@ function AppearancePanel() {
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-gray-400 hover:text-white hover:bg-white/10"
       >
-        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
             d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
         </svg>
         <span className="flex-1 text-left">Appearance</span>
         {/* mini preview of current theme */}
-        <span className="flex items-center gap-0.5 flex-shrink-0">
+        <span className="flex items-center gap-0.5 shrink-0">
           <span className="w-3 h-3 rounded-l-sm" style={{ backgroundColor: current.sidebarBg, border: '1px solid rgba(255,255,255,0.15)' }} />
           <span className="w-3 h-3 rounded-r-sm" style={{ backgroundColor: current.accent }} />
         </span>
@@ -122,7 +122,7 @@ export default function Sidebar() {
       <div className="px-5 py-5 border-b" style={{ borderColor: 'var(--sidebar-border)' }}>
         <div className="flex items-center gap-2.5">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0"
             style={{ backgroundColor: 'var(--accent)' }}
           >N</div>
           <div>
@@ -165,7 +165,7 @@ export default function Sidebar() {
         <div className="px-3 py-2.5 rounded-lg" style={{ backgroundColor: 'var(--sidebar-card)' }}>
           <div className="flex items-center gap-2 mb-1.5">
             <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
               style={{ backgroundColor: 'var(--accent)' }}
             >
               {user?.name?.[0]?.toUpperCase() ?? 'U'}
