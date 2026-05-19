@@ -16,7 +16,7 @@ const PAGE_TITLES = {
  * Shows current page title, user info, theme toggle, and alert bell.
  */
 export default function TopBar() {
-  const { user, isAdmin, logout } = useAuth()
+  const { user, logout } = useAuth()
   const { pathname }              = useLocation()
   const navigate                  = useNavigate()
   const [open, setOpen]           = useState(false)

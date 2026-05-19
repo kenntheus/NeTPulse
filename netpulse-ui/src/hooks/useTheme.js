@@ -89,7 +89,7 @@ export function useTheme() {
 
   useEffect(() => {
     apply(theme)
-    try { localStorage.setItem(KEY, theme) } catch {}
+    try { localStorage.setItem(KEY, theme) } catch { /* noop */ }
   }, [theme])
 
   useEffect(() => { apply(read()) }, [])

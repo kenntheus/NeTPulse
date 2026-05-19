@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import api from '../lib/api'
 
 /**
@@ -12,6 +12,8 @@ export function useDevices(filters = {}) {
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
 
+  const filtersKey = useMemo(() => JSON.stringify(filters), [filters])
+
   const fetchDevices = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -24,9 +26,10 @@ export function useDevices(filters = {}) {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(filters)])
+  }, [filtersKey])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDevices()
   }, [fetchDevices])
 

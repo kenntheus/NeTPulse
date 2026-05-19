@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
     try {
       const stored = localStorage.getItem('netpulse_user')
       return stored ? JSON.parse(stored) : null
-    } catch (_) { return null }
+    } catch { return null }
   })
   const [loading,     setLoading]     = useState(false)
   const [needsSetup,  setNeedsSetup]  = useState(null)
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
   }
 
   const logout = async () => {
-    try { await api.post('/auth/logout') } catch (_) {}
+    try { await api.post('/auth/logout') } catch { /* noop */ }
     localStorage.removeItem('netpulse_token')
     localStorage.removeItem('netpulse_user')
     setUser(null)
@@ -71,6 +71,7 @@ export function AuthProvider({ children }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')

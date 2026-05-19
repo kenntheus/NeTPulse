@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 
 // ── Spinner ───────────────────────────────────────────────────────────────────
 export function Spinner({ size = 'md' }) {

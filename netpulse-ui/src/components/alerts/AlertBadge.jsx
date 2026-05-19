@@ -21,7 +21,7 @@ export default function AlertBadge() {
       try {
         const { data } = await api.get('/dashboard/summary')
         setCount(data.unread_alerts ?? 0)
-      } catch (_) {}
+      } catch { /* noop */ }
     }
     fetchCount()
     const id = setInterval(fetchCount, 30_000)
@@ -37,7 +37,7 @@ export default function AlertBadge() {
         const { data } = await api.get('/alerts', { params: { per_page: 8 } })
         const items = Array.isArray(data) ? data : (data?.data ?? [])
         setAlerts(items)
-      } catch (_) {}
+      } catch { /* noop */ }
       finally { setLoading(false) }
     }
     fetchAlerts()
@@ -60,7 +60,7 @@ export default function AlertBadge() {
       await api.patch(`/alerts/${alert.id}/read`)
       setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, is_read: true } : a))
       setCount(prev => Math.max(0, prev - 1))
-    } catch (_) {}
+    } catch { /* noop */ }
   }
 
   const markAllRead = async () => {
@@ -68,7 +68,7 @@ export default function AlertBadge() {
       await api.post('/alerts/read-all')
       setAlerts(prev => prev.map(a => ({ ...a, is_read: true })))
       setCount(0)
-    } catch (_) {}
+    } catch { /* noop */ }
   }
 
   return (
@@ -137,7 +137,7 @@ export default function AlertBadge() {
                     ${!alert.is_read ? 'bg-blue-900/10' : 'hover:bg-[var(--muted-bg)]'}`}
                   style={{ borderColor: 'var(--card-border)' }}
                 >
-                  <span className="text-base flex-shrink-0 mt-0.5">
+                  <span className="text-base shrink-0 mt-0.5">
                     {TYPE_ICON[alert.type] ?? '🔔'}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -152,7 +152,7 @@ export default function AlertBadge() {
                     <button
                       onClick={() => markRead(alert)}
                       title="Mark as read"
-                      className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-green-500 hover:text-green-700 text-sm"
+                      className="shrink-0 w-5 h-5 flex items-center justify-center text-green-500 hover:text-green-700 text-sm"
                     >
                       ✓
                     </button>

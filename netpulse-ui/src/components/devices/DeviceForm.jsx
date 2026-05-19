@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Button, Input, Select, Textarea } from '../ui'
+import { Button, Input, Textarea } from '../ui'
 
 const DEVICE_TYPES = [
   // Network
@@ -31,6 +31,7 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
 
   useEffect(() => {
     if (initialData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         name:        initialData.name        ?? '',
         ip_address:  initialData.ip_address  ?? '',

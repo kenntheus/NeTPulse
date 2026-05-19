@@ -28,7 +28,7 @@ function getEcho() {
         })
       })
     })
-  } catch (_) {
+  } catch {
     // Pusher packages not installed — fall back to polling silently
   }
 
@@ -45,7 +45,7 @@ function getEcho() {
  */
 export function useEcho(channel, event, callback) {
   const callbackRef = useRef(callback)
-  callbackRef.current = callback
+  useEffect(() => { callbackRef.current = callback })
 
   useEffect(() => {
     const echo = getEcho()
@@ -55,7 +55,7 @@ export function useEcho(channel, event, callback) {
     ch.listen(`.${event}`, (data) => callbackRef.current(data))
 
     return () => {
-      try { ch.stopListening(`.${event}`) } catch (_) {}
+      try { ch.stopListening(`.${event}`) } catch { /* noop */ }
     }
   }, [channel, event])
 }

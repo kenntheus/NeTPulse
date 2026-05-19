@@ -26,7 +26,7 @@ export default function Logs() {
       setLogs(data.data)
       setMeta(data.meta)
       setPage(p)
-    } catch (_) {}
+    } catch { /* noop */ }
     finally { setLoading(false) }
   }
 
@@ -44,7 +44,7 @@ export default function Logs() {
       document.body.appendChild(link)
       link.click()
       link.remove()
-    } catch (_) {}
+    } catch { /* noop */ }
     finally { setExporting(false) }
   }
 
@@ -128,7 +128,7 @@ export default function Logs() {
                     </tr>
                   </thead>
                   <tbody>
-                    {logs.map((log, i) => (
+                    {logs.map((log) => (
                       <tr key={log.id} className="border-t hover:bg-[var(--muted-bg)]" style={{ borderColor: 'var(--card-border)' }}>
                         <td className="py-2.5 px-4 text-gray-400 text-xs">{log.id}</td>
                         <td className="py-2.5 px-4">

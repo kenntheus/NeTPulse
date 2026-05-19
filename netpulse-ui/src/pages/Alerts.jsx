@@ -26,7 +26,7 @@ export default function Alerts() {
       setAlerts(items)
       setMeta(data?.meta ?? null)
       setPage(p)
-    } catch (_) {
+    } catch {
       addToast('Failed to load alerts.', 'error')
       setAlerts([]) // prevent map crash
     } finally {
@@ -34,13 +34,14 @@ export default function Alerts() {
     }
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
   useEffect(() => { fetchAlerts(1) }, [unreadOnly])
 
   const handleMarkRead = async (alert) => {
     try {
       await api.patch(`/alerts/${alert.id}/read`)
       setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, is_read: true } : a))
-    } catch (_) {
+    } catch {
       addToast('Failed to mark as read.', 'error')
     }
   }
@@ -50,7 +51,7 @@ export default function Alerts() {
       await api.post('/alerts/read-all')
       setAlerts(prev => prev.map(a => ({ ...a, is_read: true })))
       addToast('All alerts marked as read.', 'success')
-    } catch (_) {
+    } catch {
       addToast('Failed.', 'error')
     }
   }
@@ -60,7 +61,7 @@ export default function Alerts() {
       await api.delete(`/alerts/${id}`)
       setAlerts(prev => prev.filter(a => a.id !== id))
       addToast('Alert deleted.', 'success')
-    } catch (_) {
+    } catch {
       addToast('Failed to delete.', 'error')
     }
   }

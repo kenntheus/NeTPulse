@@ -1,4 +1,4 @@
-import { Badge, Button, EmptyState } from '../ui'
+import { Badge, EmptyState } from '../ui'
 
 const TYPE_CONFIG = {
   offline:      { badge: 'offline',  icon: '🔴', label: 'Offline'       },

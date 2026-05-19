@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../lib/api'
-import { PageHeader, Card, Badge, LoadingPage, StatCard } from '../components/ui'
+import { PageHeader, Badge, LoadingPage, StatCard } from '../components/ui'
 
 const BEHAVIOUR_LABEL = {
   infrastructure:    { label: 'Infrastructure', color: 'blue',   icon: '🌐' },

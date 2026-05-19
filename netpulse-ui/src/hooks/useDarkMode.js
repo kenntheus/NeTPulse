@@ -7,7 +7,7 @@ function read() {
   try {
     const v = localStorage.getItem(KEY)
     return v !== null ? v === 'true' : false
-  } catch (_) { return false }
+  } catch { return false }
 }
 
 export function useDarkMode() {
@@ -16,7 +16,7 @@ export function useDarkMode() {
   // Sync the <html> class and persist whenever state changes
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
-    try { localStorage.setItem(KEY, String(dark)) } catch (_) {}
+    try { localStorage.setItem(KEY, String(dark)) } catch { /* noop */ }
   }, [dark])
 
   // Listen for changes made by other hook instances (Sidebar ↔ TopBar)

@@ -41,11 +41,12 @@ export default function Dashboard() {
       setLatency(lat.data)
       setUptime(upt.data)
       setLastRefresh(new Date())
-    } catch (_) {}
+    } catch { /* noop */ }
     finally { setChartLoading(false) }
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStats()
     const id = setInterval(fetchStats, 30_000)
     return () => clearInterval(id)

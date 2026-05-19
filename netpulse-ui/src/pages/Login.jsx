@@ -33,7 +33,7 @@ function VerifyCodeStep({ email, onVerified, onBack }) {
     try {
       await api.post('/auth/resend-code', { email })
       setResent(true)
-    } catch (_) { setResent(true) }
+    } catch { setResent(true) }
     finally { setResending(false) }
   }
 

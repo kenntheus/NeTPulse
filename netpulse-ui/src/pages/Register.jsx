@@ -32,7 +32,7 @@ function VerifyCodeStep({ email, onVerified, onBack }) {
     try {
       await api.post('/auth/resend-code', { email })
       setResent(true)
-    } catch (_) { setResent(true) }
+    } catch { setResent(true) }
     finally { setResending(false) }
   }
 
@@ -121,7 +121,6 @@ function SuccessStep() {
 // ── Already registered — just needs verification ──────────────────────────────
 function AlreadyRegisteredStep({ email, onContinue, onBack }) {
   const [sending, setSending] = useState(false)
-  const [sent,    setSent]    = useState(false)
   const [error,   setError]   = useState('')
 
   const sendCode = async () => {
@@ -129,7 +128,6 @@ function AlreadyRegisteredStep({ email, onContinue, onBack }) {
     setError('')
     try {
       await api.post('/auth/resend-code', { email })
-      setSent(true)
       onContinue()
     } catch (err) {
       setError(err.response?.data?.message ?? 'Failed to send code.')
@@ -216,11 +214,11 @@ export default function Register() {
 
         // Check if it's unverified by trying to resend
         try {
-          const { data } = await api.post('/auth/resend-code', { email: emailVal })
+          await api.post('/auth/resend-code', { email: emailVal })
           // If resend works, it's unverified — show the "already registered" step
           setRegEmail(emailVal)
           setStep('already-registered')
-        } catch (_) {
+        } catch {
           // Fully registered and verified — just tell them to log in
           setError('This email is already registered. Please sign in instead.')
         }
