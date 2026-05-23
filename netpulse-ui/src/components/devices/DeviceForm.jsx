@@ -21,7 +21,7 @@ const DEVICE_TYPES = [
   { value: 'other',    label: '◈   Other',           group: 'Other' },
 ]
 
-const EMPTY = { name: '', ip_address: '', type: 'other', location: '', description: '' }
+const EMPTY = { name: '', ip_address: '', type: 'other', location: '', description: '', notes: '' }
 
 export default function DeviceForm({ initialData = null, onSubmit, onCancel, submitLabel = 'Save device' }) {
   const [form,     setForm]     = useState(EMPTY)
@@ -38,6 +38,7 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
         type:        initialData.type        ?? 'other',
         location:    initialData.location    ?? '',
         description: initialData.description ?? '',
+        notes:       initialData.notes       ?? '',
       })
     } else {
       setForm(EMPTY)
@@ -144,9 +145,17 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
 
         <Textarea
           label="Description"
-          placeholder="Optional notes…"
+          placeholder="What is this device? e.g. Main office router"
           value={form.description}
           onChange={set('description')}
+          rows={2}
+        />
+
+        <Textarea
+          label="Notes"
+          placeholder="Operational notes, reminders… e.g. Firmware update needed"
+          value={form.notes}
+          onChange={set('notes')}
           rows={2}
         />
       </div>

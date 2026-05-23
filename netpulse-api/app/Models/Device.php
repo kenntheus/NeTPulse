@@ -14,7 +14,7 @@ class Device extends Model
 
     protected $fillable = [
         'name', 'ip_address', 'type', 'location',
-        'description', 'status', 'latency_ms',
+        'description', 'notes', 'status', 'latency_ms',
         'last_checked_at', 'created_by',
     ];
 
