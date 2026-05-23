@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Alert extends Model
@@ -21,7 +22,7 @@ class Alert extends Model
         return $this->belongsTo(Device::class);
     }
 
-    public function scopeUnread($query)
+    public function scopeUnread(Builder $query): Builder
     {
         return $query->where('is_read', false);
     }
