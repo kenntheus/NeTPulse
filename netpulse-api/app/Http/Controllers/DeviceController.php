@@ -95,6 +95,32 @@ class DeviceController extends Controller
         return response()->json(['message' => "{$count} device(s) deleted.", 'count' => $count]);
     }
 
+    public function mute(Request $request, Device $device): JsonResponse
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $data = $request->validate([
+            'minutes' => ['nullable', 'integer', 'min:1', 'max:10080'],
+        ]);
+
+        $minutes = $data['minutes'] ?? 60;
+        $device->update(['muted_until' => now()->addMinutes($minutes)]);
+
+        return response()->json([
+            'data' => $device->fresh(),
+            'message' => "Alerts muted for {$minutes} minute(s).",
+        ]);
+    }
+
+    public function unmute(Request $request, Device $device): JsonResponse
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $device->update(['muted_until' => null]);
+
+        return response()->json(['data' => $device->fresh(), 'message' => 'Alerts unmuted.']);
+    }
+
     public function ping(Device $device): JsonResponse
     {
         $log = $this->monitoring->checkDevice($device);
