@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import { Badge, StatusDot, Button, IconButton } from '../ui'
 
+function timeAgo(dateStr) {
+  if (!dateStr) return null
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+  if (diff < 60)   return 'just now'
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  return `${Math.floor(diff / 86400)}d ago`
+}
+
 const TYPE_ICON = {
   router:   '🌐',
   switch:   '🔀',
@@ -87,10 +96,11 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, isAdmin =
         </div>
         <div>
           <p className="text-gray-400 dark:text-gray-500 mb-0.5">Last check</p>
-          <p className="font-medium text-gray-600 dark:text-gray-400">
-            {device.last_checked_at
-              ? new Date(device.last_checked_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              : '—'}
+          <p
+            className="font-medium text-gray-600 dark:text-gray-400"
+            title={device.last_checked_at ? new Date(device.last_checked_at).toLocaleString() : undefined}
+          >
+            {timeAgo(device.last_checked_at) ?? '—'}
           </p>
         </div>
       </div>
