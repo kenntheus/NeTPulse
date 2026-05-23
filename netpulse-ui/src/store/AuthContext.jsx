@@ -19,10 +19,18 @@ export function AuthProvider({ children }) {
       .catch(() => setNeedsSetup(false))
   }, [])
 
-  const login = async (email, password) => {
+  const login = async (email, password, twoFactorCode = null) => {
     setLoading(true)
     try {
-      const { data } = await api.post('/auth/login', { email, password })
+      const payload = { email, password }
+      if (twoFactorCode) payload.two_factor_code = twoFactorCode
+
+      const { data } = await api.post('/auth/login', payload)
+
+      // 2FA required — return signal to show TOTP input
+      if (data.requires_two_factor) {
+        return { requires_two_factor: true }
+      }
 
       // Successful login — token returned
       localStorage.setItem('netpulse_token', data.token)

@@ -17,21 +17,29 @@ class User extends Authenticatable
         'email_verified_at',
         'two_factor_code',
         'two_factor_expires_at',
+        'two_factor_secret',
+        'two_factor_confirmed_at',
         'verification_code',
         'verification_code_expires_at',
     ];
 
     protected $hidden = [
         'password', 'remember_token',
-        'two_factor_code', 'verification_code',
+        'two_factor_code', 'two_factor_secret', 'verification_code',
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
         'two_factor_expires_at' => 'datetime',
+        'two_factor_confirmed_at' => 'datetime',
         'verification_code_expires_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function hasTwoFactor(): bool
+    {
+        return $this->two_factor_confirmed_at !== null;
+    }
 
     public function isAdmin(): bool
     {
