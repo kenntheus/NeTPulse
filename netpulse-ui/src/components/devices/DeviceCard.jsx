@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Badge, StatusDot, Button, IconButton } from '../ui'
+import MaintenanceWindowModal from './MaintenanceWindowModal'
 
 function timeAgo(dateStr) {
   if (!dateStr) return null
@@ -33,7 +34,8 @@ const TYPE_LABEL = {
 }
 
 export default function DeviceCard({ device, onEdit, onDelete, onPing, onMute, onUnmute, isAdmin = false, selected = false, onSelect }) {
-  const [pinging, setPinging] = useState(false)
+  const [pinging,    setPinging]    = useState(false)
+  const [maintOpen,  setMaintOpen]  = useState(false)
 
   const handlePing = async () => {
     setPinging(true)
@@ -76,6 +78,11 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, onMute, o
           </div>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
+          {device.is_under_maintenance && (
+            <Badge variant="warning" title="Under scheduled maintenance">
+              🔧 Maintenance
+            </Badge>
+          )}
           {isMuted && (
             <Badge variant="warning" title={`Muted until ${new Date(device.muted_until).toLocaleString()}`}>
               🔕 Muted
@@ -175,6 +182,13 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, onMute, o
               />
             ) : null}
             <IconButton
+              icon={<span className="text-xs">🔧</span>}
+              onClick={() => setMaintOpen(true)}
+              title="Maintenance windows"
+              variant="ghost"
+              className="text-gray-400 hover:text-blue-400"
+            />
+            <IconButton
               icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>}
               onClick={() => onEdit(device)}
               title="Edit device"
@@ -190,6 +204,14 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, onMute, o
           </>
         )}
       </div>
+
+      {isAdmin && (
+        <MaintenanceWindowModal
+          device={device}
+          open={maintOpen}
+          onClose={() => setMaintOpen(false)}
+        />
+      )}
     </div>
   )
 }

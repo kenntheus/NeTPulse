@@ -110,7 +110,7 @@ class MonitoringService
             'checked_at' => now(),
         ]);
 
-        $suppressed = $device->isMuted();
+        $suppressed = $device->isMuted() || $device->isUnderMaintenance();
         $latencyLimit = $device->latency_threshold_ms ?? 150;
 
         // Alert on status change
