@@ -140,6 +140,7 @@ class AuthController extends Controller
             ]);
         }
 
+        /** @var User $user */
         $user = Auth::user();
 
         if (! $user->isVerified()) {

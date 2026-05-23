@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class AccountController extends Controller
@@ -159,7 +160,7 @@ class AccountController extends Controller
     private function sendVerificationCode(User $user, string $code): void
     {
         try {
-            \Mail::to($user->email)->send(new VerificationCodeMail($user->name, $code));
+            Mail::to($user->email)->send(new VerificationCodeMail($user->name, $code));
             Log::info("[VerifyCode] Sent to {$user->email}");
         } catch (\Exception $e) {
             Log::error("[VerifyCode] Failed for {$user->email}: ".$e->getMessage());
