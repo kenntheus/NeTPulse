@@ -22,7 +22,8 @@ use Illuminate\Support\Facades\Log;
 class MonitoringService
 {
     public function __construct(
-        private ?AnomalyDetectionService $anomaly = null
+        private ?AnomalyDetectionService $anomaly = null,
+        private ?WebhookService $webhooks = null
     ) {}
 
     public function checkDevice(Device $device): MonitoringLog
@@ -235,13 +236,16 @@ class MonitoringService
             ? "{$emoji} [{$device->name}] ({$device->ip_address}) went OFFLINE."
             : "{$emoji} [{$device->name}] ({$device->ip_address}) has RECOVERED.";
 
+        $event = $newStatus === 'offline' ? 'offline' : 'recovered';
+
         Alert::create([
             'device_id' => $device->id,
-            'type' => $newStatus === 'offline' ? 'offline' : 'recovered',
+            'type' => $event,
             'message' => $message,
             'created_at' => now(),
         ]);
 
+        $this->webhooks?->dispatch($event, $device);
         Log::info($message);
     }
 
@@ -259,6 +263,8 @@ class MonitoringService
                 'message' => "⚠️ High latency on [{$device->name}]: {$latencyMs}ms",
                 'created_at' => now(),
             ]);
+
+            $this->webhooks?->dispatch('high_latency', $device, ['latency_ms' => $latencyMs]);
         }
     }
 }

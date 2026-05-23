@@ -8,6 +8,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\MonitoringLogController;
+use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 // ── Public auth routes ────────────────────────────────────────────────────────
@@ -59,6 +60,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/alerts/{alert}/acknowledge', [AlertController::class, 'acknowledge']);
     Route::patch('/alerts/{alert}/unacknowledge', [AlertController::class, 'unacknowledge']);
     Route::delete('/alerts/{alert}', [AlertController::class, 'destroy'])->middleware('role:admin');
+
+    Route::apiResource('webhooks', WebhookController::class)->except(['show']);
+    Route::post('/webhooks/{webhook}/test', [WebhookController::class, 'test']);
 
     Route::post('/arp/scan', [ArpScanController::class, 'scan']);
     Route::post('/agent/push', [ArpScanController::class, 'receivePush']);
