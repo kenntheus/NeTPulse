@@ -106,19 +106,26 @@ export default function Login() {
   const [error,   setError]   = useState('')
   const [loading, setLoading] = useState(false)
 
-  const [needsVerify,  setNeedsVerify]  = useState(false)
-  const [verifyEmail,  setVerifyEmail]  = useState('')
-  const [justVerified, setJustVerified] = useState(false)
+  const [needsVerify,    setNeedsVerify]    = useState(false)
+  const [verifyEmail,    setVerifyEmail]    = useState('')
+  const [justVerified,   setJustVerified]   = useState(false)
+  const [needs2fa,       setNeeds2fa]       = useState(false)
+  const [totpCode,       setTotpCode]       = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      const result = await login(form.email, form.password)
+      const result = await login(form.email, form.password, needs2fa ? totpCode : null)
 
       if (result.success) {
         navigate('/')
+        return
+      }
+
+      if (result.requires_two_factor) {
+        setNeeds2fa(true)
         return
       }
 
@@ -215,6 +222,20 @@ export default function Login() {
                 className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
             </div>
+
+            {needs2fa && (
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">🔐 Authenticator code</label>
+                <input
+                  type="text" inputMode="numeric" pattern="\d{6}" maxLength={6} autoFocus
+                  value={totpCode}
+                  onChange={e => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="6-digit code"
+                  className="w-full bg-gray-800 border border-blue-600 text-white placeholder-gray-600 rounded-lg px-3 py-2.5 text-sm text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                />
+                <p className="text-xs text-gray-500 mt-1">Enter the code from your authenticator app.</p>
+              </div>
+            )}
 
             <button
               type="submit" disabled={loading}

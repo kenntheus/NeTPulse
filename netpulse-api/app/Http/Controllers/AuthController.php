@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\VerificationCodeMail;
 use App\Models\User;
 use App\Services\AuditService;
+use App\Services\TotpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -156,6 +157,17 @@ class AuthController extends Controller
                 'requires_verification' => true,
                 'email' => $user->email,
             ], 403);
+        }
+
+        // If 2FA is enabled, require a TOTP code
+        if ($user->hasTwoFactor()) {
+            $code = $request->input('two_factor_code');
+            if (! $code) {
+                return response()->json(['requires_two_factor' => true], 200);
+            }
+            if (! TotpService::verify($user->two_factor_secret, (string) $code)) {
+                return response()->json(['message' => 'Invalid authenticator code.'], 422);
+            }
         }
 
         $token = $user->createToken('netpulse-token')->plainTextToken;

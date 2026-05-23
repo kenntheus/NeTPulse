@@ -10,6 +10,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\MaintenanceWindowController;
 use App\Http\Controllers\MonitoringLogController;
+use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +34,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/agent-token', [AccountController::class, 'agentTokenStatus']);
         Route::post('/agent-token', [AccountController::class, 'generateAgentToken']);
         Route::delete('/agent-token', [AccountController::class, 'revokeAgentToken']);
+        Route::get('/2fa', [TwoFactorController::class, 'status']);
+        Route::post('/2fa/setup', [TwoFactorController::class, 'setup']);
+        Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm']);
+        Route::delete('/2fa', [TwoFactorController::class, 'disable']);
     });
 
     Route::prefix('auth')->group(function () {

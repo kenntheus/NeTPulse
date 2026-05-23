@@ -560,6 +560,135 @@ function AgentToken({ addToast }) {
   )
 }
 
+// ── Two-Factor Authentication ─────────────────────────────────────────────────
+function TwoFactorSettings({ addToast }) {
+  const [enabled,    setEnabled]    = useState(null)   // null = loading
+  const [step,       setStep]       = useState('idle') // idle | setup | confirm | disable
+  const [qrUrl,      setQrUrl]      = useState('')
+  const [secret,     setSecret]     = useState('')
+  const [code,       setCode]       = useState('')
+  const [loading,    setLoading]    = useState(false)
+  const [error,      setError]      = useState('')
+
+  useEffect(() => {
+    api.get('/account/2fa').then(r => setEnabled(r.data.enabled)).catch(() => {})
+  }, [])
+
+  const startSetup = async () => {
+    setLoading(true); setError('')
+    try {
+      const { data } = await api.post('/account/2fa/setup')
+      setQrUrl(data.qr_url); setSecret(data.secret); setStep('confirm')
+    } catch { setError('Failed to start setup.') }
+    finally { setLoading(false) }
+  }
+
+  const confirmEnable = async () => {
+    setLoading(true); setError('')
+    try {
+      await api.post('/account/2fa/confirm', { code })
+      setEnabled(true); setStep('idle'); setCode('')
+      addToast('Two-factor authentication enabled!', 'success')
+    } catch (err) { setError(err.response?.data?.message ?? 'Invalid code.') }
+    finally { setLoading(false) }
+  }
+
+  const confirmDisable = async () => {
+    setLoading(true); setError('')
+    try {
+      await api.delete('/account/2fa', { data: { code } })
+      setEnabled(false); setStep('idle'); setCode('')
+      addToast('Two-factor authentication disabled.', 'success')
+    } catch (err) { setError(err.response?.data?.message ?? 'Invalid code.') }
+    finally { setLoading(false) }
+  }
+
+  if (enabled === null) return <p className="text-xs text-gray-500">Loading…</p>
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-white">
+            {enabled ? '🔐 Two-factor authentication is ON' : '🔓 Two-factor authentication is OFF'}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {enabled ? 'Your account is protected with TOTP.' : 'Add an extra layer of security to your account.'}
+          </p>
+        </div>
+        {step === 'idle' && (
+          enabled
+            ? <button onClick={() => { setStep('disable'); setCode(''); setError('') }}
+                className="text-sm text-red-400 hover:text-red-300 transition-colors border border-red-800 px-3 py-1.5 rounded-lg">
+                Disable
+              </button>
+            : <button onClick={startSetup} disabled={loading}
+                className="text-sm text-white font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                style={{ backgroundColor: 'var(--accent)' }}>
+                {loading ? 'Setting up…' : 'Enable 2FA'}
+              </button>
+        )}
+      </div>
+
+      {/* QR code setup step */}
+      {step === 'confirm' && (
+        <div className="space-y-4 pt-2 border-t" style={{ borderColor: 'var(--card-border)' }}>
+          <p className="text-xs text-gray-400">Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.), then enter the 6-digit code to confirm.</p>
+          <div className="flex flex-col sm:flex-row gap-4 items-start">
+            <img src={qrUrl} alt="TOTP QR code" className="w-36 h-36 rounded-lg border" style={{ borderColor: 'var(--card-border)' }} />
+            <div className="flex-1 space-y-2">
+              <p className="text-xs text-gray-400">Or enter the secret manually:</p>
+              <code className="block text-xs font-mono bg-[var(--muted-bg)] px-3 py-2 rounded-lg text-[var(--accent)] tracking-widest break-all">{secret}</code>
+            </div>
+          </div>
+          {error && <p className="text-xs text-red-400">{error}</p>}
+          <div className="flex gap-2">
+            <input type="text" inputMode="numeric" maxLength={6} placeholder="6-digit code" value={code}
+              onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
+              className="flex-1 border rounded-lg px-3 py-2 text-sm text-white font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
+            />
+            <button onClick={confirmEnable} disabled={loading || code.length < 6}
+              className="px-4 py-2 text-sm text-white font-medium rounded-lg disabled:opacity-50"
+              style={{ backgroundColor: 'var(--accent)' }}>
+              {loading ? 'Verifying…' : 'Verify & Enable'}
+            </button>
+            <button onClick={() => { setStep('idle'); setCode(''); setError('') }}
+              className="px-3 py-2 text-sm text-gray-400 hover:text-white rounded-lg border transition-colors"
+              style={{ borderColor: 'var(--card-border)' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Disable confirmation step */}
+      {step === 'disable' && (
+        <div className="space-y-3 pt-2 border-t" style={{ borderColor: 'var(--card-border)' }}>
+          <p className="text-xs text-gray-400">Enter your current authenticator code to disable 2FA.</p>
+          {error && <p className="text-xs text-red-400">{error}</p>}
+          <div className="flex gap-2">
+            <input type="text" inputMode="numeric" maxLength={6} placeholder="6-digit code" value={code}
+              onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
+              className="flex-1 border rounded-lg px-3 py-2 text-sm text-white font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
+            />
+            <button onClick={confirmDisable} disabled={loading || code.length < 6}
+              className="px-4 py-2 text-sm text-white font-medium rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50">
+              {loading ? 'Disabling…' : 'Confirm disable'}
+            </button>
+            <button onClick={() => { setStep('idle'); setCode(''); setError('') }}
+              className="px-3 py-2 text-sm text-gray-400 hover:text-white rounded-lg border transition-colors"
+              style={{ borderColor: 'var(--card-border)' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main Account Settings page ────────────────────────────────────────────────
 export default function Account() {
   const { user, logout, isAdmin }   = useAuth()
@@ -620,6 +749,11 @@ export default function Account() {
         subtitle="Use a strong password with at least 8 characters"
       >
         <ChangePassword addToast={addToast} />
+      </Section>
+
+      {/* Two-Factor Authentication */}
+      <Section title="Two-Factor Authentication" subtitle="Require a TOTP code from an authenticator app on every login">
+        <TwoFactorSettings addToast={addToast} />
       </Section>
 
       {/* Agent token */}
