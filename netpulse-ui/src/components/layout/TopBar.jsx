@@ -22,7 +22,7 @@ export default function TopBar() {
   const [open, setOpen]           = useState(false)
   const dropdownRef               = useRef(null)
 
-  const page = PAGE_TITLES[pathname] ?? { title: 'NetPulse', subtitle: '' }
+  const page = PAGE_TITLES[pathname] ?? { title: 'NeTPulse', subtitle: '' }
 
   // Close dropdown when clicking outside
   useEffect(() => {

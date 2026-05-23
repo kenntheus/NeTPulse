@@ -126,7 +126,7 @@ export default function Sidebar() {
             style={{ backgroundColor: 'var(--accent)' }}
           >N</div>
           <div>
-            <span className="text-white font-semibold tracking-tight text-sm">NetPulse</span>
+            <span className="text-white font-semibold tracking-tight text-sm">NeTPulse</span>
             <p className="text-gray-400 text-xs">Network Monitor</p>
           </div>
         </div>

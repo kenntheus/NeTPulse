@@ -46,7 +46,7 @@ export default function VerifyEmail() {
         <div className="flex items-center gap-3 mb-8 justify-center">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">N</div>
           <div>
-            <h1 className="text-white font-bold text-xl leading-none">NetPulse</h1>
+            <h1 className="text-white font-bold text-xl leading-none">NeTPulse</h1>
             <p className="text-gray-500 text-xs">Network Monitoring</p>
           </div>
         </div>
@@ -66,14 +66,14 @@ export default function VerifyEmail() {
               <div>
                 <h2 className="text-white font-semibold text-lg mb-2">Email verified!</h2>
                 <p className="text-gray-400 text-sm">
-                  Your account is now active. You can log in to NetPulse.
+                  Your account is now active. You can log in to NeTPulse.
                 </p>
               </div>
               <Link
                 to="/login"
                 className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg px-4 py-2.5 text-sm transition-all"
               >
-                Sign in to NetPulse
+                Sign in to NeTPulse
               </Link>
             </div>
           )}

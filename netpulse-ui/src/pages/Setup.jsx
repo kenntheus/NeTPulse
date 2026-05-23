@@ -54,7 +54,7 @@ export default function Setup() {
         {/* Logo / header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 text-white text-2xl font-bold mb-4">N</div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome to NetPulse</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome to NeTPulse</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Create your admin account to get started. Only one admin account is allowed.
           </p>
