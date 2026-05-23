@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Alert extends Model
 {
@@ -17,7 +18,7 @@ class Alert extends Model
         'created_at' => 'datetime',
     ];
 
-    public function device()
+    public function device(): BelongsTo
     {
         return $this->belongsTo(Device::class);
     }

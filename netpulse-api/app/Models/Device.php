@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Device extends Model
 {
@@ -19,27 +22,27 @@ class Device extends Model
         'last_checked_at' => 'datetime',
     ];
 
-    public function logs()
+    public function logs(): HasMany
     {
         return $this->hasMany(MonitoringLog::class)->orderByDesc('checked_at');
     }
 
-    public function alerts()
+    public function alerts(): HasMany
     {
         return $this->hasMany(Alert::class)->orderByDesc('created_at');
     }
 
-    public function creator()
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function scopeOnline($query)
+    public function scopeOnline(Builder $query): Builder
     {
         return $query->where('status', 'online');
     }
 
-    public function scopeOffline($query)
+    public function scopeOffline(Builder $query): Builder
     {
         return $query->where('status', 'offline');
     }
