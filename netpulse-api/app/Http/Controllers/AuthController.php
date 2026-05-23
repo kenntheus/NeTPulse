@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
@@ -133,7 +134,7 @@ class AuthController extends Controller
         ]);
 
         if (! Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']])) {
-            \Log::warning("[Auth] Failed login attempt for {$validated['email']} from {$request->ip()}");
+            Log::warning("[Auth] Failed login attempt for {$validated['email']} from {$request->ip()}");
             throw ValidationException::withMessages([
                 'email' => ['The email or password is incorrect.'],
             ]);
@@ -179,9 +180,9 @@ class AuthController extends Controller
     {
         try {
             Mail::to($user->email)->send(new VerificationCodeMail($user->name, $code));
-            \Log::info("[VerifyCode] Sent to {$user->email}");
+            Log::info("[VerifyCode] Sent to {$user->email}");
         } catch (\Exception $e) {
-            \Log::error("[VerifyCode] Failed for {$user->email}: ".$e->getMessage());
+            Log::error("[VerifyCode] Failed for {$user->email}: ".$e->getMessage());
         }
     }
 
