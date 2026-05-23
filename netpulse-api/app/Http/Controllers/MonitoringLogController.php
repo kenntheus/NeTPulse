@@ -17,7 +17,7 @@ class MonitoringLogController extends Controller
             ->when($request->to, fn ($q, $d) => $q->where('checked_at', '<=', $d.' 23:59:59'))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->orderByDesc('checked_at')
-            ->paginate((int) $request->per_page ?? 50);
+            ->paginate(min((int) ($request->per_page ?? 50), 200));
 
         return response()->json($logs);
     }

@@ -35,6 +35,13 @@ return Application::configure(basePath: dirname(__DIR__))
                     ? $e->getStatusCode()
                     : 500;
 
+                // Don't leak internal details on server errors
+                if ($status >= 500) {
+                    Log::error('[API] Unhandled exception: '.$e->getMessage(), ['exception' => $e]);
+
+                    return response()->json(['message' => 'An unexpected error occurred.'], $status);
+                }
+
                 return response()->json([
                     'message' => $e->getMessage() ?: 'Server Error',
                 ], $status);

@@ -23,21 +23,24 @@ class AiController extends Controller
             $anomalies = $this->anomaly->getAllBaselines();
         } catch (\Throwable $e) {
             $anomalies = [];
-            $errors['anomalies'] = $e->getMessage();
+            $errors['anomalies'] = 'Anomaly service unavailable.';
+            \Log::error('[AI] Anomaly service error: '.$e->getMessage());
         }
 
         try {
             $fingerprints = $this->fingerprint->fingerprintAll();
         } catch (\Throwable $e) {
             $fingerprints = [];
-            $errors['fingerprints'] = $e->getMessage();
+            $errors['fingerprints'] = 'Fingerprint service unavailable.';
+            \Log::error('[AI] Fingerprint service error: '.$e->getMessage());
         }
 
         try {
             $grouping = $this->grouping->getGroupingStats();
         } catch (\Throwable $e) {
             $grouping = [];
-            $errors['grouping'] = $e->getMessage();
+            $errors['grouping'] = 'Grouping service unavailable.';
+            \Log::error('[AI] Grouping service error: '.$e->getMessage());
         }
 
         return response()->json([

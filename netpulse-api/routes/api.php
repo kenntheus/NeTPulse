@@ -37,7 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
     });
 
-    Route::prefix('dashboard')->group(function () {
+    Route::prefix('dashboard')->middleware('throttle:60,1')->group(function () {
         Route::get('/summary', [DashboardController::class, 'summary']);
         Route::get('/latency-chart', [DashboardController::class, 'latencyChart']);
         Route::get('/uptime-chart', [DashboardController::class, 'uptimeChart']);
@@ -57,7 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/arp/scan', [ArpScanController::class, 'scan']);
     Route::post('/agent/push', [ArpScanController::class, 'receivePush']);
 
-    Route::prefix('ai')->group(function () {
+    Route::prefix('ai')->middleware('throttle:10,1')->group(function () {
         Route::get('/insights', [AiController::class, 'insights']);
         Route::get('/anomalies', [AiController::class, 'anomalies']);
         Route::get('/fingerprints', [AiController::class, 'fingerprints']);
