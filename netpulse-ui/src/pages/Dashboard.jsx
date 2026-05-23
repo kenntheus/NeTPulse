@@ -160,7 +160,7 @@ export default function Dashboard() {
               </AreaChart>
             </ResponsiveContainer>
           )}
-        </div>
+        </div>}
 
         {/* Uptime bar chart */}
         {show('uptime') && <div className="rounded-xl border p-5" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
