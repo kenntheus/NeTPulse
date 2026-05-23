@@ -24,6 +24,12 @@ class MonitoringLogController extends Controller
 
     public function export(Request $request): Response
     {
+        $request->validate([
+            'device_id' => ['nullable', 'integer', 'exists:devices,id'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+        ]);
+
         $deviceId = $request->query('device_id');
 
         $logs = MonitoringLog::with('device')
@@ -39,9 +45,9 @@ class MonitoringLogController extends Controller
         foreach ($logs as $log) {
             $csv .= implode(',', [
                 $log->id,
-                '"'.($log->device->name ?? 'Unknown').'"',
-                $log->device->ip_address ?? '',
-                $log->status,
+                '"'.$this->csvSafe($log->device->name ?? 'Unknown').'"',
+                $this->csvSafe($log->device->ip_address ?? ''),
+                $this->csvSafe($log->status),
                 $log->latency_ms ?? '',
                 $log->checked_at,
             ])."\n";
@@ -53,5 +59,14 @@ class MonitoringLogController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
+    }
+
+    private function csvSafe(string $value): string
+    {
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            return "'".$value;
+        }
+
+        return $value;
     }
 }

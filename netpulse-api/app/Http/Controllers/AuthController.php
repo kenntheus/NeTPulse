@@ -92,7 +92,7 @@ class AuthController extends Controller
             ], 400);
         }
 
-        if ($user->verification_code !== $request->code) {
+        if (! hash_equals((string) $user->verification_code, (string) $request->code)) {
             return response()->json([
                 'message' => 'Incorrect code. Please check your email and try again.',
             ], 400);
@@ -133,6 +133,7 @@ class AuthController extends Controller
         ]);
 
         if (! Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']])) {
+            \Log::warning("[Auth] Failed login attempt for {$validated['email']} from {$request->ip()}");
             throw ValidationException::withMessages([
                 'email' => ['The email or password is incorrect.'],
             ]);

@@ -13,11 +13,11 @@ use Illuminate\Support\Facades\Route;
 // ── Public auth routes ────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
     Route::get('/setup-status', [AuthController::class, 'setupStatus']);
-    Route::post('/setup', [AuthController::class, 'setup']);
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/verify-code', [AuthController::class, 'verifyCode']);
-    Route::post('/resend-code', [AuthController::class, 'resendCode']);
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/setup', [AuthController::class, 'setup'])->middleware('throttle:5,1');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+    Route::post('/verify-code', [AuthController::class, 'verifyCode'])->middleware('throttle:10,1');
+    Route::post('/resend-code', [AuthController::class, 'resendCode'])->middleware('throttle:5,1');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 });
 
 // ── Protected routes ──────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/alerts', [AlertController::class, 'index']);
     Route::patch('/alerts/{alert}/read', [AlertController::class, 'markRead']);
     Route::post('/alerts/read-all', [AlertController::class, 'markAllRead']);
-    Route::delete('/alerts/{alert}', [AlertController::class, 'destroy']);
+    Route::delete('/alerts/{alert}', [AlertController::class, 'destroy'])->middleware('role:admin');
 
     Route::post('/arp/scan', [ArpScanController::class, 'scan']);
     Route::post('/agent/push', [ArpScanController::class, 'receivePush']);

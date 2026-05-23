@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // ── Exclude API routes from CSRF entirely ──────────────────────────
         // We use Bearer tokens (Sanctum), not cookies, so CSRF is not needed.
         $middleware->validateCsrfTokens(except: ['api/*']);
+
+        // ── Security headers on every response ────────────────────────────
+        $middleware->append(SecurityHeaders::class);
 
         // ── Role middleware alias ──────────────────────────────────────────
         $middleware->alias([

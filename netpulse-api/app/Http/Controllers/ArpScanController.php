@@ -27,7 +27,7 @@ class ArpScanController extends Controller
         $validated = $request->validate([
             'entries' => ['required', 'array', 'min:1'],
             'entries.*.ip' => ['required', 'ip'],
-            'entries.*.mac' => ['required', 'string', 'max:17'],
+            'entries.*.mac' => ['required', 'string', 'regex:/^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/'],
             'entries.*.type' => ['sometimes', 'string'],
         ]);
 
