@@ -13,7 +13,7 @@ import {
 
 export default function Devices() {
   const { isAdmin } = useAuth()
-  const [filters, setFilters] = useState({ search: '', status: '', type: '' })
+  const [filters, setFilters] = useState({ search: '', status: '', type: '', tag: '' })
   const { devices, loading, addDevice, updateDevice, deleteDevice, bulkDeleteDevices, muteDevice, unmuteDevice, pingDevice, applyRealtimeUpdate } = useDevices(filters)
   const { toasts, addToast, removeToast } = useToast()
 
@@ -171,12 +171,16 @@ export default function Devices() {
     }
   }
 
+  // Collect all tags across devices for the filter dropdown
+  const allTags = [...new Set(devices.flatMap(d => d.tags ?? []))].sort()
+
   // Client-side filter
   const visible = devices.filter(d => {
     const q = filters.search.toLowerCase()
     if (q && !d.name.toLowerCase().includes(q) && !d.ip_address.includes(q)) return false
     if (filters.status && d.status !== filters.status) return false
     if (filters.type   && d.type   !== filters.type)   return false
+    if (filters.tag    && !(d.tags ?? []).includes(filters.tag)) return false
     return true
   })
 
@@ -310,8 +314,15 @@ export default function Devices() {
           <option value="other">Other</option>
         </Select>
 
-        {(filters.search || filters.status || filters.type) && (
-          <Button size="sm" variant="ghost" onClick={() => setFilters({ search: '', status: '', type: '' })}>
+        {allTags.length > 0 && (
+          <Select value={filters.tag} onChange={e => setFilters(f => ({ ...f, tag: e.target.value }))} className="w-36">
+            <option value="">All tags</option>
+            {allTags.map(tag => <option key={tag} value={tag}>#{tag}</option>)}
+          </Select>
+        )}
+
+        {(filters.search || filters.status || filters.type || filters.tag) && (
+          <Button size="sm" variant="ghost" onClick={() => setFilters({ search: '', status: '', type: '', tag: '' })}>
             Clear
           </Button>
         )}

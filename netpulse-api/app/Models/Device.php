@@ -16,13 +16,14 @@ class Device extends Model
 
     protected $fillable = [
         'name', 'ip_address', 'type', 'location',
-        'description', 'notes', 'status', 'latency_ms',
+        'description', 'notes', 'tags', 'status', 'latency_ms',
         'latency_threshold_ms', 'last_checked_at', 'muted_until', 'created_by',
     ];
 
     protected $casts = [
         'last_checked_at' => 'datetime',
         'muted_until' => 'datetime',
+        'tags' => 'array',
     ];
 
     public function isMuted(): bool

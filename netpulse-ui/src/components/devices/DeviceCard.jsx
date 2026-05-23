@@ -152,6 +152,16 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, onMute, o
         </div>
       )}
 
+      {device.tags?.length > 0 && (
+        <div className="flex flex-wrap gap-1 -mt-2">
+          {device.tags.map(tag => (
+            <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] font-medium">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex items-center gap-2 pt-1 border-t mt-auto" style={{ borderColor: 'var(--card-border)' }}>
         <Button size="sm" variant="secondary" loading={pinging} onClick={handlePing} className="flex-1">

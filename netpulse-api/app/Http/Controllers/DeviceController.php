@@ -28,6 +28,7 @@ class DeviceController extends Controller
             ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%")->orWhere('ip_address', 'like', "%{$s}%"))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->type, fn ($q, $t) => $q->where('type', $t))
+            ->when($request->tag, fn ($q, $tag) => $q->whereJsonContains('tags', $tag))
             ->withCount(['logs as total_checks_7d' => fn ($q) => $q->where('checked_at', '>=', $cutoff)])
             ->withCount(['logs as online_checks_7d' => fn ($q) => $q->where('checked_at', '>=', $cutoff)->where('status', 'online')])
             ->orderBy('name')
@@ -73,6 +74,8 @@ class DeviceController extends Controller
             'location' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
+            'tags' => ['nullable', 'array', 'max:10'],
+            'tags.*' => ['string', 'max:30'],
             'latency_threshold_ms' => ['nullable', 'integer', 'min:1', 'max:10000'],
         ]);
 
@@ -98,6 +101,8 @@ class DeviceController extends Controller
             'location' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
+            'tags' => ['nullable', 'array', 'max:10'],
+            'tags.*' => ['string', 'max:30'],
             'latency_threshold_ms' => ['nullable', 'integer', 'min:1', 'max:10000'],
         ]);
 
