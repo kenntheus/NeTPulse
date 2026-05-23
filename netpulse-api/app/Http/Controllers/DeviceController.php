@@ -21,14 +21,44 @@ class DeviceController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $cutoff = now()->subDays(7);
+
         $devices = Device::query()
             ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%")->orWhere('ip_address', 'like', "%{$s}%"))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->type, fn ($q, $t) => $q->where('type', $t))
+            ->withCount(['logs as total_checks_7d' => fn ($q) => $q->where('checked_at', '>=', $cutoff)])
+            ->withCount(['logs as online_checks_7d' => fn ($q) => $q->where('checked_at', '>=', $cutoff)->where('status', 'online')])
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->map(function ($device) {
+                $device->uptime_7d = $device->total_checks_7d > 0
+                    ? round($device->online_checks_7d / $device->total_checks_7d * 100, 1)
+                    : null;
+
+                return $device;
+            });
 
         return response()->json(['data' => $devices]);
+    }
+
+    public function uptime(Device $device, Request $request): JsonResponse
+    {
+        $days = (int) ($request->query('days', 30));
+        $days = min(max($days, 1), 90);
+        $cutoff = now()->subDays($days);
+
+        $total = $device->logs()->where('checked_at', '>=', $cutoff)->count();
+        $online = $device->logs()->where('checked_at', '>=', $cutoff)->where('status', 'online')->count();
+
+        return response()->json([
+            'data' => [
+                'period_days' => $days,
+                'total_checks' => $total,
+                'online_checks' => $online,
+                'uptime_percent' => $total > 0 ? round($online / $total * 100, 2) : null,
+            ],
+        ]);
     }
 
     public function store(Request $request): JsonResponse
