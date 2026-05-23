@@ -15,19 +15,19 @@ class ArpScanController extends Controller
         $result = $this->scanner->scan();
 
         return response()->json([
-            'message'  => "Scan complete. Found {$result['found']} devices on the network. {$result['new']} new device(s) added.",
-            'found'    => $result['found'],
-            'new'      => $result['new'],
-            'entries'  => $result['entries'],
+            'message' => "Scan complete. Found {$result['found']} devices on the network. {$result['new']} new device(s) added.",
+            'found' => $result['found'],
+            'new' => $result['new'],
+            'entries' => $result['entries'],
         ]);
     }
 
     public function receivePush(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'entries'        => ['required', 'array', 'min:1'],
-            'entries.*.ip'   => ['required', 'ip'],
-            'entries.*.mac'  => ['required', 'string', 'max:17'],
+            'entries' => ['required', 'array', 'min:1'],
+            'entries.*.ip' => ['required', 'ip'],
+            'entries.*.mac' => ['required', 'string', 'max:17'],
             'entries.*.type' => ['sometimes', 'string'],
         ]);
 
@@ -35,8 +35,8 @@ class ArpScanController extends Controller
 
         return response()->json([
             'message' => "Agent push processed. Found {$result['found']} devices. {$result['new']} new.",
-            'found'   => $result['found'],
-            'new'     => $result['new'],
+            'found' => $result['found'],
+            'new' => $result['new'],
         ]);
     }
 }

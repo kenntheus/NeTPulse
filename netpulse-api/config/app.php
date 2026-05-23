@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 return [
 
@@ -132,30 +135,31 @@ return [
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web:      __DIR__ . '/../routes/web.php',
-        api:      __DIR__ . '/../routes/api.php',
-        commands: __DIR__ . '/../routes/console.php',
-        health:   '/up',
+        web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
         // CORS — must run before everything else
-        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
- 
+        $middleware->prepend(HandleCors::class);
+
         // Only add stateful middleware for requests that actually come from
         // the SPA origin — avoids session crashes on plain Bearer token calls
         $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            EnsureFrontendRequestsAreStateful::class,
         ]);
- 
+
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'role' => RoleMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Return JSON for all API errors instead of HTML
-        $exceptions->render(function (\Throwable $e, Request $request) {
+        $exceptions->render(function (Throwable $e, Request $request) {
             if ($request->is('api/*') || $request->wantsJson()) {
                 $status = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
+
                 return response()->json([
                     'message' => $e->getMessage() ?: 'Server Error',
                 ], $status);

@@ -9,17 +9,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'two_factor_code')) {
+            if (! Schema::hasColumn('users', 'two_factor_code')) {
                 $table->string('two_factor_code', 6)->nullable()->after('email_verified_at');
             }
-            if (!Schema::hasColumn('users', 'two_factor_expires_at')) {
+            if (! Schema::hasColumn('users', 'two_factor_expires_at')) {
                 $table->timestamp('two_factor_expires_at')->nullable()->after('two_factor_code');
             }
             // Verification code columns
-            if (!Schema::hasColumn('users', 'verification_code')) {
+            if (! Schema::hasColumn('users', 'verification_code')) {
                 $table->string('verification_code', 6)->nullable()->after('two_factor_expires_at');
             }
-            if (!Schema::hasColumn('users', 'verification_code_expires_at')) {
+            if (! Schema::hasColumn('users', 'verification_code_expires_at')) {
                 $table->timestamp('verification_code_expires_at')->nullable()->after('verification_code');
             }
         });

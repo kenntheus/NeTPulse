@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Log;
 class AlertGroupingService
 {
     private const GROUP_WINDOW_SECS = 60;
-    private const GROUP_THRESHOLD   = 3;
+
+    private const GROUP_THRESHOLD = 3;
 
     public function detectCascade(): void
     {
@@ -21,17 +22,21 @@ class AlertGroupingService
 
         $count = $recentOfflineAlerts->count();
 
-        if ($count < self::GROUP_THRESHOLD) return;
+        if ($count < self::GROUP_THRESHOLD) {
+            return;
+        }
 
         $existingGroup = Alert::where('type', 'offline')
             ->where('message', 'like', '%[GROUPED]%')
             ->where('created_at', '>=', now()->subMinutes(5))
             ->exists();
 
-        if ($existingGroup) return;
+        if ($existingGroup) {
+            return;
+        }
 
-        $deviceIds    = $recentOfflineAlerts->pluck('device_id')->unique();
-        $deviceNames  = Device::whereIn('id', $deviceIds)->pluck('name')->join(', ');
+        $deviceIds = $recentOfflineAlerts->pluck('device_id')->unique();
+        $deviceNames = Device::whereIn('id', $deviceIds)->pluck('name')->join(', ');
 
         $rootCause = $this->identifyRootCause($deviceIds->toArray());
 
@@ -40,9 +45,9 @@ class AlertGroupingService
             : "🌐 [GROUPED] Network event — {$count} devices went offline simultaneously: {$deviceNames}. Check your router/switch.";
 
         Alert::create([
-            'device_id'  => $deviceIds->first(),
-            'type'       => 'offline',
-            'message'    => $message,
+            'device_id' => $deviceIds->first(),
+            'type' => 'offline',
+            'message' => $message,
             'created_at' => now(),
         ]);
 
@@ -57,25 +62,25 @@ class AlertGroupingService
         return Device::whereIn('id', $offlineDeviceIds)
             ->where(function ($q) {
                 $q->where('ip_address', 'like', '%.1')
-                  ->orWhere('ip_address', 'like', '%.254')
-                  ->orWhere('type', 'router');
+                    ->orWhere('ip_address', 'like', '%.254')
+                    ->orWhere('type', 'router');
             })
             ->first();
     }
 
     public function getGroupingStats(): array
     {
-        $totalAlerts   = Alert::count();
+        $totalAlerts = Alert::count();
         $groupedAlerts = Alert::where('message', 'like', '%[GROUPED]%')->count();
-        $cascades      = Alert::where('type', 'offline')
+        $cascades = Alert::where('type', 'offline')
             ->where('message', 'like', '%Network outage%')
             ->count();
 
         return [
-            'total_alerts'   => $totalAlerts,
+            'total_alerts' => $totalAlerts,
             'grouped_alerts' => $groupedAlerts,
             'cascades_found' => $cascades,
-            'noise_reduced'  => $totalAlerts > 0
+            'noise_reduced' => $totalAlerts > 0
                 ? round(($groupedAlerts / $totalAlerts) * 100, 1)
                 : 0,
         ];

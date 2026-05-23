@@ -16,7 +16,7 @@ class AuthController extends Controller
     public function setupStatus(): JsonResponse
     {
         return response()->json([
-            'needs_setup' => !User::where('role', 'admin')->exists(),
+            'needs_setup' => ! User::where('role', 'admin')->exists(),
         ]);
     }
 
@@ -27,16 +27,16 @@ class AuthController extends Controller
         }
 
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:100'],
-            'email'    => ['required', 'email', 'max:150', 'unique:users,email'],
+            'name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:150', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         User::create([
-            'name'              => $validated['name'],
-            'email'             => $validated['email'],
-            'password'          => Hash::make($validated['password']),
-            'role'              => 'admin',
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'admin',
             'email_verified_at' => now(),
         ]);
 
@@ -46,16 +46,16 @@ class AuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'max:100'],
-            'email'    => ['required', 'email', 'max:150', 'unique:users,email'],
+            'name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'max:150', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         $user = User::create([
-            'name'              => $validated['name'],
-            'email'             => $validated['email'],
-            'password'          => Hash::make($validated['password']),
-            'role'              => 'viewer',
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'viewer',
             'email_verified_at' => null,
         ]);
 
@@ -64,7 +64,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Account created! Enter the 6-digit code sent to your email.',
-            'email'   => $user->email,
+            'email' => $user->email,
         ], 201);
     }
 
@@ -72,12 +72,12 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => ['required', 'email'],
-            'code'  => ['required', 'string', 'size:6'],
+            'code' => ['required', 'string', 'size:6'],
         ]);
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'Invalid request.'], 400);
         }
 
@@ -85,7 +85,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Account already verified. Please log in.']);
         }
 
-        if (!$user->verification_code || $user->verification_code_expires_at < now()) {
+        if (! $user->verification_code || $user->verification_code_expires_at < now()) {
             return response()->json([
                 'message' => 'Code has expired. Please request a new one.',
                 'expired' => true,
@@ -109,7 +109,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'If that email is registered and unverified, a new code has been sent.']);
         }
 
@@ -128,11 +128,11 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'email'    => ['required', 'email'],
+            'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']])) {
+        if (! Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']])) {
             throw ValidationException::withMessages([
                 'email' => ['The email or password is incorrect.'],
             ]);
@@ -140,7 +140,7 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
-        if (!$user->isVerified()) {
+        if (! $user->isVerified()) {
             Auth::logout();
 
             // Send a fresh code so they can verify immediately
@@ -148,16 +148,16 @@ class AuthController extends Controller
             $this->sendVerificationCode($user, $code);
 
             return response()->json([
-                'message'               => 'Your email is not verified. We sent a verification code to your email.',
+                'message' => 'Your email is not verified. We sent a verification code to your email.',
                 'requires_verification' => true,
-                'email'                 => $user->email,
+                'email' => $user->email,
             ], 403);
         }
 
         $token = $user->createToken('netpulse-token')->plainTextToken;
 
         return response()->json([
-            'user'  => $this->formatUser($user),
+            'user' => $this->formatUser($user),
             'token' => $token,
         ]);
     }
@@ -165,6 +165,7 @@ class AuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
+
         return response()->json(['message' => 'Logged out successfully.']);
     }
 
@@ -179,18 +180,18 @@ class AuthController extends Controller
             Mail::to($user->email)->send(new VerificationCodeMail($user->name, $code));
             \Log::info("[VerifyCode] Sent to {$user->email}");
         } catch (\Exception $e) {
-            \Log::error("[VerifyCode] Failed for {$user->email}: " . $e->getMessage());
+            \Log::error("[VerifyCode] Failed for {$user->email}: ".$e->getMessage());
         }
     }
 
     private function formatUser(User $user): array
     {
         return [
-            'id'         => $user->id,
-            'name'       => $user->name,
-            'email'      => $user->email,
-            'role'       => $user->role,
-            'verified'   => $user->isVerified(),
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'verified' => $user->isVerified(),
             'created_at' => $user->created_at,
         ];
     }

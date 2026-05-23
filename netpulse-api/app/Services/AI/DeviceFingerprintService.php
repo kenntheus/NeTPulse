@@ -9,7 +9,7 @@ class DeviceFingerprintService
 {
     public function fingerprintAll(): array
     {
-        return Device::all()->map(fn($d) => $this->fingerprint($d))->toArray();
+        return Device::all()->map(fn ($d) => $this->fingerprint($d))->toArray();
     }
 
     public function fingerprint(Device $device): array
@@ -23,34 +23,34 @@ class DeviceFingerprintService
             return $this->emptyFingerprint($device);
         }
 
-        $totalChecks  = $logs->count();
-        $onlineLogs   = $logs->where('status', 'online');
-        $offlineLogs  = $logs->where('status', 'offline');
-        $uptimePct    = round(($onlineLogs->count() / $totalChecks) * 100, 1);
-        $latencies    = $onlineLogs->pluck('latency_ms')->filter()->values();
-        $avgLatency   = $latencies->count() ? round($latencies->avg(), 1) : null;
-        $latencyStd   = $this->stddev($latencies->toArray());
-        $activeHours  = $this->getActiveHours($onlineLogs);
-        $peakHour     = $activeHours ? array_search(max($activeHours), $activeHours) : null;
+        $totalChecks = $logs->count();
+        $onlineLogs = $logs->where('status', 'online');
+        $offlineLogs = $logs->where('status', 'offline');
+        $uptimePct = round(($onlineLogs->count() / $totalChecks) * 100, 1);
+        $latencies = $onlineLogs->pluck('latency_ms')->filter()->values();
+        $avgLatency = $latencies->count() ? round($latencies->avg(), 1) : null;
+        $latencyStd = $this->stddev($latencies->toArray());
+        $activeHours = $this->getActiveHours($onlineLogs);
+        $peakHour = $activeHours ? array_search(max($activeHours), $activeHours) : null;
         $hasSleepPattern = $this->detectSleepPattern($logs);
         $behaviour = $this->classifyBehaviour($uptimePct, $avgLatency, $latencyStd, $hasSleepPattern);
         $suggestedType = $this->suggestType($behaviour, $device->type);
 
         return [
-            'device_id'       => $device->id,
-            'device_name'     => $device->name,
-            'ip_address'      => $device->ip_address,
-            'current_type'    => $device->type,
-            'suggested_type'  => $suggestedType,
-            'confidence'      => $this->confidence($behaviour),
-            'uptime_pct'      => $uptimePct,
-            'avg_latency_ms'  => $avgLatency,
-            'latency_stddev'  => round($latencyStd, 1),
-            'peak_hour'       => $peakHour,
+            'device_id' => $device->id,
+            'device_name' => $device->name,
+            'ip_address' => $device->ip_address,
+            'current_type' => $device->type,
+            'suggested_type' => $suggestedType,
+            'confidence' => $this->confidence($behaviour),
+            'uptime_pct' => $uptimePct,
+            'avg_latency_ms' => $avgLatency,
+            'latency_stddev' => round($latencyStd, 1),
+            'peak_hour' => $peakHour,
             'has_sleep_pattern' => $hasSleepPattern,
-            'behaviour'       => $behaviour,
-            'active_hours'    => $activeHours,
-            'total_checks'    => $totalChecks,
+            'behaviour' => $behaviour,
+            'active_hours' => $activeHours,
+            'total_checks' => $totalChecks,
         ];
     }
 
@@ -61,32 +61,37 @@ class DeviceFingerprintService
             $hour = (int) $log->checked_at->format('G');
             $hours[$hour]++;
         }
+
         return $hours;
     }
 
     private function detectSleepPattern($logs): bool
     {
         $nightOffline = 0;
-        $nightTotal   = 0;
+        $nightTotal = 0;
 
         foreach ($logs as $log) {
             $hour = (int) $log->checked_at->format('G');
             if ($hour >= 23 || $hour < 7) {
                 $nightTotal++;
-                if ($log->status === 'offline') $nightOffline++;
+                if ($log->status === 'offline') {
+                    $nightOffline++;
+                }
             }
         }
 
-        if ($nightTotal < 10) return false;
+        if ($nightTotal < 10) {
+            return false;
+        }
 
         return ($nightOffline / $nightTotal) > 0.6;
     }
 
     private function classifyBehaviour(
-        float  $uptime,
+        float $uptime,
         ?float $avgLatency,
-        float  $latencyStd,
-        bool   $sleeps
+        float $latencyStd,
+        bool $sleeps
     ): string {
         if ($uptime >= 98 && $avgLatency !== null && $avgLatency < 20 && $latencyStd < 5) {
             return 'infrastructure';
@@ -104,7 +109,7 @@ class DeviceFingerprintService
             return 'personal_device';
         }
 
-        if ($uptime >= 80 && $uptime < 98 && !$sleeps) {
+        if ($uptime >= 80 && $uptime < 98 && ! $sleeps) {
             return 'smart_home';
         }
 
@@ -113,53 +118,56 @@ class DeviceFingerprintService
 
     private function suggestType(string $behaviour, string $currentType): string
     {
-        return match($behaviour) {
-            'infrastructure'  => in_array($currentType, ['router','switch','firewall','ap'])
+        return match ($behaviour) {
+            'infrastructure' => in_array($currentType, ['router', 'switch', 'firewall', 'ap'])
                                     ? $currentType : 'router',
-            'server'          => in_array($currentType, ['server','pc']) ? $currentType : 'server',
-            'personal_device' => in_array($currentType, ['phone','laptop','tablet']) ? $currentType : 'phone',
-            'smart_home'      => in_array($currentType, ['smarttv','cctv','printer']) ? $currentType : 'smarttv',
-            default           => $currentType,
+            'server' => in_array($currentType, ['server', 'pc']) ? $currentType : 'server',
+            'personal_device' => in_array($currentType, ['phone', 'laptop', 'tablet']) ? $currentType : 'phone',
+            'smart_home' => in_array($currentType, ['smarttv', 'cctv', 'printer']) ? $currentType : 'smarttv',
+            default => $currentType,
         };
     }
 
     private function confidence(string $behaviour): string
     {
-        return match($behaviour) {
-            'infrastructure'  => 'high',
-            'server'          => 'high',
+        return match ($behaviour) {
+            'infrastructure' => 'high',
+            'server' => 'high',
             'personal_device' => 'medium',
-            'smart_home'      => 'medium',
-            default           => 'low',
+            'smart_home' => 'medium',
+            default => 'low',
         };
     }
 
     private function stddev(array $values): float
     {
         $count = count($values);
-        if ($count < 2) return 0;
-        $mean     = array_sum($values) / $count;
-        $variance = array_sum(array_map(fn($x) => ($x - $mean) ** 2, $values)) / $count;
+        if ($count < 2) {
+            return 0;
+        }
+        $mean = array_sum($values) / $count;
+        $variance = array_sum(array_map(fn ($x) => ($x - $mean) ** 2, $values)) / $count;
+
         return sqrt($variance);
     }
 
     private function emptyFingerprint(Device $device): array
     {
         return [
-            'device_id'         => $device->id,
-            'device_name'       => $device->name,
-            'ip_address'        => $device->ip_address,
-            'current_type'      => $device->type,
-            'suggested_type'    => $device->type,
-            'confidence'        => 'none',
-            'uptime_pct'        => null,
-            'avg_latency_ms'    => null,
-            'latency_stddev'    => null,
-            'peak_hour'         => null,
+            'device_id' => $device->id,
+            'device_name' => $device->name,
+            'ip_address' => $device->ip_address,
+            'current_type' => $device->type,
+            'suggested_type' => $device->type,
+            'confidence' => 'none',
+            'uptime_pct' => null,
+            'avg_latency_ms' => null,
+            'latency_stddev' => null,
+            'peak_hour' => null,
             'has_sleep_pattern' => false,
-            'behaviour'         => 'insufficient_data',
-            'active_hours'      => [],
-            'total_checks'      => 0,
+            'behaviour' => 'insufficient_data',
+            'active_hours' => [],
+            'total_checks' => 0,
         ];
     }
 }

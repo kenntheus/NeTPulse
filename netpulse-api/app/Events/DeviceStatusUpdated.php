@@ -14,7 +14,7 @@ class DeviceStatusUpdated implements ShouldBroadcast
     use Dispatchable, SerializesModels;
 
     public function __construct(
-        public Device        $device,
+        public Device $device,
         public MonitoringLog $log,
     ) {}
 
@@ -31,14 +31,14 @@ class DeviceStatusUpdated implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'device_id'   => $this->device->id,
-            'name'        => $this->device->name,
-            'ip_address'  => $this->device->ip_address,
-            'type'        => $this->device->type,
-            'location'    => $this->device->location,
-            'status'      => $this->device->status,
-            'latency_ms'  => $this->log->latency_ms,
-            'checked_at'  => $this->log->checked_at?->toISOString(),
+            'device_id' => $this->device->id,
+            'name' => $this->device->name,
+            'ip_address' => $this->device->ip_address,
+            'type' => $this->device->type,
+            'location' => $this->device->location,
+            'status' => $this->device->status,
+            'latency_ms' => $this->log->latency_ms,
+            'checked_at' => $this->log->checked_at?->toISOString(),
         ];
     }
 }

@@ -13,9 +13,9 @@ class MonitoringLogController extends Controller
     public function index(Request $request, Device $device): JsonResponse
     {
         $logs = MonitoringLog::where('device_id', $device->id)
-            ->when($request->from,   fn($q, $d) => $q->where('checked_at', '>=', $d))
-            ->when($request->to,     fn($q, $d) => $q->where('checked_at', '<=', $d . ' 23:59:59'))
-            ->when($request->status, fn($q, $s) => $q->where('status', $s))
+            ->when($request->from, fn ($q, $d) => $q->where('checked_at', '>=', $d))
+            ->when($request->to, fn ($q, $d) => $q->where('checked_at', '<=', $d.' 23:59:59'))
+            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->orderByDesc('checked_at')
             ->paginate((int) $request->per_page ?? 50);
 
@@ -27,9 +27,9 @@ class MonitoringLogController extends Controller
         $deviceId = $request->query('device_id');
 
         $logs = MonitoringLog::with('device')
-            ->when($deviceId, fn($q) => $q->where('device_id', $deviceId))
-            ->when($request->from, fn($q, $d) => $q->where('checked_at', '>=', $d))
-            ->when($request->to,   fn($q, $d) => $q->where('checked_at', '<=', $d . ' 23:59:59'))
+            ->when($deviceId, fn ($q) => $q->where('device_id', $deviceId))
+            ->when($request->from, fn ($q, $d) => $q->where('checked_at', '>=', $d))
+            ->when($request->to, fn ($q, $d) => $q->where('checked_at', '<=', $d.' 23:59:59'))
             ->orderByDesc('checked_at')
             ->limit(50000)
             ->get();
@@ -39,18 +39,18 @@ class MonitoringLogController extends Controller
         foreach ($logs as $log) {
             $csv .= implode(',', [
                 $log->id,
-                '"' . ($log->device->name ?? 'Unknown') . '"',
+                '"'.($log->device->name ?? 'Unknown').'"',
                 $log->device->ip_address ?? '',
                 $log->status,
                 $log->latency_ms ?? '',
                 $log->checked_at,
-            ]) . "\n";
+            ])."\n";
         }
 
-        $filename = 'netpulse-logs-' . now()->format('Y-m-d') . '.csv';
+        $filename = 'netpulse-logs-'.now()->format('Y-m-d').'.csv';
 
         return response($csv, 200, [
-            'Content-Type'        => 'text/csv',
+            'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
     }

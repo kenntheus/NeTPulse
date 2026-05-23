@@ -4,17 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Device;
 use App\Services\MonitoringService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class DeviceController extends Controller
 {
     use AuthorizesRequests;
 
     private const VALID_TYPES = [
-        'router','switch','server','firewall','ap',
-        'phone','tablet','laptop','pc','cctv','printer','smarttv','other'
+        'router', 'switch', 'server', 'firewall', 'ap',
+        'phone', 'tablet', 'laptop', 'pc', 'cctv', 'printer', 'smarttv', 'other',
     ];
 
     public function __construct(private MonitoringService $monitoring) {}
@@ -22,9 +22,9 @@ class DeviceController extends Controller
     public function index(Request $request): JsonResponse
     {
         $devices = Device::query()
-            ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%")->orWhere('ip_address', 'like', "%{$s}%"))
-            ->when($request->status, fn($q, $s) => $q->where('status', $s))
-            ->when($request->type,   fn($q, $t) => $q->where('type', $t))
+            ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%")->orWhere('ip_address', 'like', "%{$s}%"))
+            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->type, fn ($q, $t) => $q->where('type', $t))
             ->orderBy('name')
             ->get();
 
@@ -36,10 +36,10 @@ class DeviceController extends Controller
         $this->authorize('create', Device::class);
 
         $data = $request->validate([
-            'name'        => ['required', 'string', 'max:100'],
-            'ip_address'  => ['required', 'ip'],
-            'type'        => ['required', 'in:' . implode(',', self::VALID_TYPES)],
-            'location'    => ['nullable', 'string', 'max:150'],
+            'name' => ['required', 'string', 'max:100'],
+            'ip_address' => ['required', 'ip'],
+            'type' => ['required', 'in:'.implode(',', self::VALID_TYPES)],
+            'location' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
         ]);
 
@@ -59,14 +59,15 @@ class DeviceController extends Controller
         $this->authorize('update', $device);
 
         $data = $request->validate([
-            'name'        => ['sometimes', 'string', 'max:100'],
-            'ip_address'  => ['sometimes', 'ip'],
-            'type'        => ['sometimes', 'in:' . implode(',', self::VALID_TYPES)],
-            'location'    => ['nullable', 'string', 'max:150'],
+            'name' => ['sometimes', 'string', 'max:100'],
+            'ip_address' => ['sometimes', 'ip'],
+            'type' => ['sometimes', 'in:'.implode(',', self::VALID_TYPES)],
+            'location' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
         ]);
 
         $device->update($data);
+
         return response()->json(['data' => $device->fresh()]);
     }
 
@@ -74,14 +75,16 @@ class DeviceController extends Controller
     {
         $this->authorize('delete', $device);
         $device->delete();
+
         return response()->json(['message' => 'Device deleted.']);
     }
 
     public function ping(Device $device): JsonResponse
     {
         $log = $this->monitoring->checkDevice($device);
+
         return response()->json([
-            'status'     => $device->fresh()->status,
+            'status' => $device->fresh()->status,
             'latency_ms' => $log->latency_ms,
             'checked_at' => $log->checked_at,
         ]);

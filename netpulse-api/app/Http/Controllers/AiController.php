@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\AI\AnomalyDetectionService;
 use App\Services\AI\AlertGroupingService;
+use App\Services\AI\AnomalyDetectionService;
 use App\Services\AI\DeviceFingerprintService;
 use Illuminate\Http\JsonResponse;
 
 class AiController extends Controller
 {
     public function __construct(
-        private AnomalyDetectionService  $anomaly,
-        private AlertGroupingService     $grouping,
+        private AnomalyDetectionService $anomaly,
+        private AlertGroupingService $grouping,
         private DeviceFingerprintService $fingerprint,
     ) {}
 
@@ -41,10 +41,10 @@ class AiController extends Controller
         }
 
         return response()->json([
-            'anomalies'    => $anomalies,
+            'anomalies' => $anomalies,
             'fingerprints' => $fingerprints,
-            'grouping'     => $grouping,
-            'errors'       => $errors ?: null,
+            'grouping' => $grouping,
+            'errors' => $errors ?: null,
         ]);
     }
 
@@ -57,5 +57,4 @@ class AiController extends Controller
     {
         return response()->json($this->fingerprint->fingerprintAll());
     }
-
 }

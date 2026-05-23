@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\VerificationCodeMail;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -35,14 +35,14 @@ class AccountController extends Controller
     public function requestEmailUpdate(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => ['required', 'email', 'max:150', 'unique:users,email,' . $request->user()->id],
+            'email' => ['required', 'email', 'max:150', 'unique:users,email,'.$request->user()->id],
             'password' => ['required', 'string'],
         ]);
 
         $user = $request->user();
 
         // Check current password
-        if (!Hash::check($request->password, $user->password)) {
+        if (! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'password' => ['The current password is incorrect.'],
             ]);
@@ -75,7 +75,7 @@ class AccountController extends Controller
 
         $user = $request->user();
 
-        if (!$user->verification_code || $user->verification_code_expires_at < now()) {
+        if (! $user->verification_code || $user->verification_code_expires_at < now()) {
             return response()->json([
                 'message' => 'Code has expired. Please request a new one.',
                 'expired' => true,
@@ -100,6 +100,7 @@ class AccountController extends Controller
     public function agentTokenStatus(Request $request): JsonResponse
     {
         $hasToken = $request->user()->tokens()->where('name', 'agent-token')->exists();
+
         return response()->json(['has_token' => $hasToken]);
     }
 
@@ -110,7 +111,7 @@ class AccountController extends Controller
         $token = $user->createToken('agent-token');
 
         return response()->json([
-            'token'   => $token->plainTextToken,
+            'token' => $token->plainTextToken,
             'message' => 'Agent token generated.',
         ]);
     }
@@ -118,6 +119,7 @@ class AccountController extends Controller
     public function revokeAgentToken(Request $request): JsonResponse
     {
         $request->user()->tokens()->where('name', 'agent-token')->delete();
+
         return response()->json(['message' => 'Agent token revoked.']);
     }
 
@@ -134,7 +136,7 @@ class AccountController extends Controller
         $user = $request->user();
 
         // Check current password
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             throw ValidationException::withMessages([
                 'current_password' => ['The current password is incorrect.'],
             ]);
@@ -156,10 +158,10 @@ class AccountController extends Controller
     private function sendVerificationCode(User $user, string $code): void
     {
         try {
-            \Mail::to($user->email)->send(new \App\Mail\VerificationCodeMail($user->name, $code));
+            \Mail::to($user->email)->send(new VerificationCodeMail($user->name, $code));
             \Log::info("[VerifyCode] Sent to {$user->email}");
         } catch (\Exception $e) {
-            \Log::error("[VerifyCode] Failed for {$user->email}: " . $e->getMessage());
+            \Log::error("[VerifyCode] Failed for {$user->email}: ".$e->getMessage());
         }
     }
 

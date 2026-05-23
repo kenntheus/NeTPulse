@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('ip_address', 45);
             $table->enum('type', [
                 'router', 'switch', 'server', 'firewall', 'ap',
-                'phone', 'tablet', 'laptop', 'pc', 'cctv', 'printer', 'smarttv', 'other'
+                'phone', 'tablet', 'laptop', 'pc', 'cctv', 'printer', 'smarttv', 'other',
             ])->default('other');
             $table->string('location', 150)->nullable();
             $table->text('description')->nullable();

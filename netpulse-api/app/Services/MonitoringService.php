@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Events\DeviceStatusUpdated;
 use App\Models\Alert;
 use App\Models\Device;
 use App\Models\MonitoringLog;
-use App\Events\DeviceStatusUpdated;
 use App\Services\AI\AnomalyDetectionService;
 use Illuminate\Support\Facades\Log;
 
@@ -44,7 +44,7 @@ class MonitoringService
             try {
                 $this->checkDevice($device);
             } catch (\Exception $e) {
-                Log::error("Monitor failed for device {$device->id}: " . $e->getMessage());
+                Log::error("Monitor failed for device {$device->id}: ".$e->getMessage());
             }
         });
     }
@@ -57,11 +57,12 @@ class MonitoringService
         if ($device->status !== 'online') {
             // Device is offline per ARP — log it but don't ping
             $log = MonitoringLog::create([
-                'device_id'  => $device->id,
-                'status'     => 'offline',
+                'device_id' => $device->id,
+                'status' => 'offline',
                 'latency_ms' => null,
                 'checked_at' => now(),
             ]);
+
             return $log;
         }
 
@@ -69,15 +70,15 @@ class MonitoringService
         [$status, $latencyMs] = $this->simulate($device);
 
         $log = MonitoringLog::create([
-            'device_id'  => $device->id,
-            'status'     => 'online',   // keep as online — ARP owns status
+            'device_id' => $device->id,
+            'status' => 'online',   // keep as online — ARP owns status
             'latency_ms' => $latencyMs,
             'checked_at' => now(),
         ]);
 
         // Update latency only — NOT status
         $device->update([
-            'latency_ms'      => $latencyMs,
+            'latency_ms' => $latencyMs,
             'last_checked_at' => now(),
         ]);
 
@@ -89,7 +90,8 @@ class MonitoringService
         // Broadcast updated latency
         try {
             broadcast(new DeviceStatusUpdated($device->fresh(), $log));
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+        }
 
         return $log;
     }
@@ -101,8 +103,8 @@ class MonitoringService
         [$status, $latencyMs] = $this->ping($device->ip_address);
 
         $log = MonitoringLog::create([
-            'device_id'  => $device->id,
-            'status'     => $status,
+            'device_id' => $device->id,
+            'status' => $status,
             'latency_ms' => $latencyMs,
             'checked_at' => now(),
         ]);
@@ -123,14 +125,15 @@ class MonitoringService
         }
 
         $device->update([
-            'status'          => $status,
-            'latency_ms'      => $latencyMs,
+            'status' => $status,
+            'latency_ms' => $latencyMs,
             'last_checked_at' => now(),
         ]);
 
         try {
             broadcast(new DeviceStatusUpdated($device->fresh(), $log));
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+        }
 
         return $log;
     }
@@ -153,22 +156,22 @@ class MonitoringService
     private function simulate(Device $device): array
     {
         $profiles = [
-            'router'   => [1, 8],
-            'switch'   => [1, 6],
+            'router' => [1, 8],
+            'switch' => [1, 6],
             'firewall' => [1, 5],
-            'server'   => [2, 20],
-            'pc'       => [2, 25],
-            'laptop'   => [2, 30],
-            'ap'       => [2, 15],
-            'phone'    => [3, 35],
-            'tablet'   => [3, 35],
-            'smarttv'  => [5, 40],
-            'cctv'     => [3, 25],
-            'printer'  => [5, 50],
-            'other'    => [5, 40],
+            'server' => [2, 20],
+            'pc' => [2, 25],
+            'laptop' => [2, 30],
+            'ap' => [2, 15],
+            'phone' => [3, 35],
+            'tablet' => [3, 35],
+            'smarttv' => [5, 40],
+            'cctv' => [3, 25],
+            'printer' => [5, 50],
+            'other' => [5, 40],
         ];
 
-        $range   = $profiles[$device->type] ?? [5, 40];
+        $range = $profiles[$device->type] ?? [5, 40];
         $latency = rand($range[0], $range[1]);
 
         // 5% chance of congestion spike
@@ -184,17 +187,17 @@ class MonitoringService
      */
     private function ping(string $ip): array
     {
-        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+        if (! filter_var($ip, FILTER_VALIDATE_IP)) {
             return ['offline', null];
         }
 
         $isWindows = PHP_OS_FAMILY === 'Windows';
-        $cmd       = $isWindows
-            ? 'ping -n 1 -w 2000 ' . escapeshellarg($ip) . ' 2>&1'
-            : 'ping -c 1 -W 2 '    . escapeshellarg($ip) . ' 2>&1';
+        $cmd = $isWindows
+            ? 'ping -n 1 -w 2000 '.escapeshellarg($ip).' 2>&1'
+            : 'ping -c 1 -W 2 '.escapeshellarg($ip).' 2>&1';
 
-        $start   = microtime(true);
-        $output  = shell_exec($cmd) ?? '';
+        $start = microtime(true);
+        $output = shell_exec($cmd) ?? '';
         $elapsed = (int) round((microtime(true) - $start) * 1000);
 
         $success = $isWindows
@@ -203,6 +206,7 @@ class MonitoringService
 
         if ($success) {
             $latency = $this->extractLatency($output, $isWindows) ?? $elapsed;
+
             return ['online', max(1, $latency)];
         }
 
@@ -212,24 +216,29 @@ class MonitoringService
     private function extractLatency(string $output, bool $isWindows): ?int
     {
         if ($isWindows) {
-            if (preg_match('/Average\s*=\s*(\d+)ms/i', $output, $m)) return (int) $m[1];
+            if (preg_match('/Average\s*=\s*(\d+)ms/i', $output, $m)) {
+                return (int) $m[1];
+            }
         } else {
-            if (preg_match('/time[=<]([\d.]+)\s*ms/i', $output, $m)) return (int) round((float) $m[1]);
+            if (preg_match('/time[=<]([\d.]+)\s*ms/i', $output, $m)) {
+                return (int) round((float) $m[1]);
+            }
         }
+
         return null;
     }
 
     private function handleStatusChange(Device $device, string $newStatus): void
     {
-        $emoji   = $newStatus === 'offline' ? '🔴' : '🟢';
+        $emoji = $newStatus === 'offline' ? '🔴' : '🟢';
         $message = $newStatus === 'offline'
             ? "{$emoji} [{$device->name}] ({$device->ip_address}) went OFFLINE."
             : "{$emoji} [{$device->name}] ({$device->ip_address}) has RECOVERED.";
 
         Alert::create([
-            'device_id'  => $device->id,
-            'type'       => $newStatus === 'offline' ? 'offline' : 'recovered',
-            'message'    => $message,
+            'device_id' => $device->id,
+            'type' => $newStatus === 'offline' ? 'offline' : 'recovered',
+            'message' => $message,
             'created_at' => now(),
         ]);
 
@@ -243,11 +252,11 @@ class MonitoringService
             ->where('created_at', '>=', now()->subMinutes(30))
             ->exists();
 
-        if (!$recent) {
+        if (! $recent) {
             Alert::create([
-                'device_id'  => $device->id,
-                'type'       => 'high_latency',
-                'message'    => "⚠️ High latency on [{$device->name}]: {$latencyMs}ms",
+                'device_id' => $device->id,
+                'type' => 'high_latency',
+                'message' => "⚠️ High latency on [{$device->name}]: {$latencyMs}ms",
                 'created_at' => now(),
             ]);
         }

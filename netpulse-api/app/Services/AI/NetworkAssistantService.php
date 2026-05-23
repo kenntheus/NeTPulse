@@ -4,14 +4,13 @@ namespace App\Services\AI;
 
 use App\Models\Alert;
 use App\Models\Device;
-use App\Models\MonitoringLog;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class NetworkAssistantService
 {
     public function __construct(
-        private AnomalyDetectionService  $anomaly,
+        private AnomalyDetectionService $anomaly,
         private DeviceFingerprintService $fingerprint,
     ) {}
 
@@ -19,12 +18,12 @@ class NetworkAssistantService
     {
         $apiKey = config('services.gemini.key');
 
-        if (!$apiKey) {
-            return "⚠️ Gemini API key not configured. Add GEMINI_API_KEY to your .env file. Get a free key at aistudio.google.com.";
+        if (! $apiKey) {
+            return '⚠️ Gemini API key not configured. Add GEMINI_API_KEY to your .env file. Get a free key at aistudio.google.com.';
         }
 
         $systemPrompt = $this->buildSystemPrompt();
-        $contents     = $this->buildContents($history, $userMessage);
+        $contents = $this->buildContents($history, $userMessage);
 
         try {
             $response = Http::withHeaders([
@@ -35,58 +34,58 @@ class NetworkAssistantService
                     'system_instruction' => [
                         'parts' => [['text' => $systemPrompt]],
                     ],
-                    'contents'           => $contents,
-                    'generationConfig'   => ['maxOutputTokens' => 1024],
+                    'contents' => $contents,
+                    'generationConfig' => ['maxOutputTokens' => 1024],
                 ]
             );
 
-            if (!$response->successful()) {
-                Log::error('[AI Assistant] Gemini API error: ' . $response->body());
+            if (! $response->successful()) {
+                Log::error('[AI Assistant] Gemini API error: '.$response->body());
                 $status = $response->status();
                 if ($status === 429) {
-                    return "⏳ Rate limit reached. The free tier allows a limited number of requests per minute — please wait a moment and try again.";
+                    return '⏳ Rate limit reached. The free tier allows a limited number of requests per minute — please wait a moment and try again.';
                 }
+
                 return "I'm having trouble connecting to Gemini right now (HTTP {$status}). Please try again.";
             }
 
             $data = $response->json();
+
             return $data['candidates'][0]['content']['parts'][0]['text'] ?? 'No response received.';
 
         } catch (\Exception $e) {
-            Log::error('[AI Assistant] Exception: ' . $e->getMessage());
-            return "Connection error. Please check your API key and try again.";
+            Log::error('[AI Assistant] Exception: '.$e->getMessage());
+
+            return 'Connection error. Please check your API key and try again.';
         }
     }
 
     private function buildSystemPrompt(): string
     {
-        $devices      = Device::all();
-        $online       = $devices->where('status', 'online');
-        $offline      = $devices->where('status', 'offline');
+        $devices = Device::all();
+        $online = $devices->where('status', 'online');
+        $offline = $devices->where('status', 'offline');
         $recentAlerts = Alert::with('device')
             ->orderByDesc('created_at')
             ->limit(10)
             ->get();
-        $anomalies    = $this->anomaly->getAllBaselines();
+        $anomalies = $this->anomaly->getAllBaselines();
 
-        $deviceLines = $devices->map(fn($d) =>
-            "  - {$d->name} ({$d->ip_address}) | Type: {$d->type} | Status: {$d->status}" .
-            ($d->latency_ms ? " | Latency: {$d->latency_ms}ms" : "") .
-            ($d->location ? " | Location: {$d->location}" : "")
+        $deviceLines = $devices->map(fn ($d) => "  - {$d->name} ({$d->ip_address}) | Type: {$d->type} | Status: {$d->status}".
+            ($d->latency_ms ? " | Latency: {$d->latency_ms}ms" : '').
+            ($d->location ? " | Location: {$d->location}" : '')
         )->join("\n");
 
-        $alertLines = $recentAlerts->map(fn($a) =>
-            "  - [{$a->created_at->diffForHumans()}] {$a->message}"
+        $alertLines = $recentAlerts->map(fn ($a) => "  - [{$a->created_at->diffForHumans()}] {$a->message}"
         )->join("\n");
 
-        $anomalyLines = collect($anomalies)->map(fn($b) =>
-            "  - {$b['device_name']}: avg={$b['mean']}ms, stddev={$b['stddev']}ms, samples={$b['count']}"
+        $anomalyLines = collect($anomalies)->map(fn ($b) => "  - {$b['device_name']}: avg={$b['mean']}ms, stddev={$b['stddev']}ms, samples={$b['count']}"
         )->join("\n");
 
-        $now        = now()->format('Y-m-d H:i');
+        $now = now()->format('Y-m-d H:i');
         $totalCount = $devices->count();
-        $onCount    = $online->count();
-        $offCount   = $offline->count();
+        $onCount = $online->count();
+        $offCount = $offline->count();
 
         return <<<PROMPT
 You are NetPulse AI, an intelligent network monitoring assistant. You have access to real-time data about the user's network.
@@ -126,7 +125,7 @@ PROMPT;
         // Gemini uses "model" for assistant turns; map accordingly
         foreach (array_slice($history, -10) as $turn) {
             if (isset($turn['role'], $turn['content'])) {
-                $role       = $turn['role'] === 'assistant' ? 'model' : 'user';
+                $role = $turn['role'] === 'assistant' ? 'model' : 'user';
                 $contents[] = ['role' => $role, 'parts' => [['text' => $turn['content']]]];
             }
         }

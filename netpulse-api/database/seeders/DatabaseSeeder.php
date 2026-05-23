@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -12,6 +11,7 @@ class DatabaseSeeder extends Seeder
     {
         if (User::where('role', 'admin')->exists()) {
             $this->command->info('✅ Admin already exists — skipping seed.');
+
             return;
         }
 

@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
+use App\Events\DeviceStatusUpdated;
 use App\Models\Alert;
 use App\Models\Device;
 use App\Models\MonitoringLog;
-use App\Events\DeviceStatusUpdated;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * ArpScannerService
@@ -23,25 +23,28 @@ use Illuminate\Support\Facades\Http;
  */
 class ArpScannerService
 {
-    public function scan(array $preScannedEntries = null): array
+    public function scan(?array $preScannedEntries = null): array
     {
         $arpEntries = $preScannedEntries ?? $this->parseArpTable();
 
         if (empty($arpEntries)) {
             Log::warning('[ARP] No entries found.');
+
             return ['found' => 0, 'new' => 0, 'entries' => []];
         }
 
         $newDevices = 0;
 
         foreach ($arpEntries as $entry) {
-            $ip  = $entry['ip'];
+            $ip = $entry['ip'];
             $mac = $entry['mac'];
 
-            if ($this->shouldSkip($ip, $mac)) continue;
+            if ($this->shouldSkip($ip, $mac)) {
+                continue;
+            }
 
             // Auto-create if not tracked yet
-            $isNew = !Device::where('ip_address', $ip)->exists();
+            $isNew = ! Device::where('ip_address', $ip)->exists();
             if ($isNew) {
                 $this->autoCreateDevice($ip, $mac);
                 $newDevices++;
@@ -60,11 +63,11 @@ class ArpScannerService
         // Mark missing private devices offline
         $this->markMissingOffline($arpEntries);
 
-        Log::info("[ARP] Scan complete. Found: " . count($arpEntries) . " entries. New: {$newDevices}");
+        Log::info('[ARP] Scan complete. Found: '.count($arpEntries)." entries. New: {$newDevices}");
 
         return [
-            'found'   => count($arpEntries),
-            'new'     => $newDevices,
+            'found' => count($arpEntries),
+            'new' => $newDevices,
             'entries' => $arpEntries,
         ];
     }
@@ -74,7 +77,7 @@ class ArpScannerService
     private function parseArpTable(): array
     {
         $isWindows = PHP_OS_FAMILY === 'Windows';
-        $output    = shell_exec($isWindows ? 'arp -a 2>&1' : 'arp -a 2>&1') ?? '';
+        $output = shell_exec($isWindows ? 'arp -a 2>&1' : 'arp -a 2>&1') ?? '';
 
         return $isWindows
             ? $this->parseWindowsArp($output)
@@ -92,13 +95,14 @@ class ArpScannerService
             )) {
                 if (strtolower($m[3]) === 'dynamic') {
                     $entries[] = [
-                        'ip'  => $m[1],
+                        'ip' => $m[1],
                         'mac' => strtolower(str_replace('-', ':', $m[2])),
                         'type' => 'dynamic',
                     ];
                 }
             }
         }
+
         return $entries;
     }
 
@@ -113,6 +117,7 @@ class ArpScannerService
                 }
             }
         }
+
         return $entries;
     }
 
@@ -123,8 +128,8 @@ class ArpScannerService
         $wasOffline = $device->status === 'offline';
 
         $log = MonitoringLog::create([
-            'device_id'  => $device->id,
-            'status'     => 'online',
+            'device_id' => $device->id,
+            'status' => 'online',
             'latency_ms' => null,
             'checked_at' => now(),
         ]);
@@ -132,22 +137,23 @@ class ArpScannerService
         // Only alert on genuine recovery (was offline, now online)
         if ($wasOffline) {
             Alert::create([
-                'device_id'  => $device->id,
-                'type'       => 'recovered',
-                'message'    => "🟢 [{$device->name}] ({$device->ip_address}) reconnected to the network.",
+                'device_id' => $device->id,
+                'type' => 'recovered',
+                'message' => "🟢 [{$device->name}] ({$device->ip_address}) reconnected to the network.",
                 'created_at' => now(),
             ]);
             Log::info("[ARP] Device recovered: {$device->ip_address}");
         }
 
         $device->update([
-            'status'          => 'online',
+            'status' => 'online',
             'last_checked_at' => now(),
         ]);
 
         try {
             broadcast(new DeviceStatusUpdated($device->fresh(), $log));
-        } catch (\Exception $e) {}
+        } catch (\Exception $e) {
+        }
     }
 
     private function markMissingOffline(array $arpEntries): void
@@ -156,31 +162,34 @@ class ArpScannerService
 
         Device::where('status', 'online')->get()->each(function (Device $device) use ($foundIps) {
             // Only manage private IPs
-            if (!$this->isPrivateIp($device->ip_address)) return;
+            if (! $this->isPrivateIp($device->ip_address)) {
+                return;
+            }
 
-            if (!in_array($device->ip_address, $foundIps)) {
+            if (! in_array($device->ip_address, $foundIps)) {
                 $log = MonitoringLog::create([
-                    'device_id'  => $device->id,
-                    'status'     => 'offline',
+                    'device_id' => $device->id,
+                    'status' => 'offline',
                     'latency_ms' => null,
                     'checked_at' => now(),
                 ]);
 
                 Alert::create([
-                    'device_id'  => $device->id,
-                    'type'       => 'offline',
-                    'message'    => "🔴 [{$device->name}] ({$device->ip_address}) left the network.",
+                    'device_id' => $device->id,
+                    'type' => 'offline',
+                    'message' => "🔴 [{$device->name}] ({$device->ip_address}) left the network.",
                     'created_at' => now(),
                 ]);
 
                 $device->update([
-                    'status'          => 'offline',
+                    'status' => 'offline',
                     'last_checked_at' => now(),
                 ]);
 
                 try {
                     broadcast(new DeviceStatusUpdated($device->fresh(), $log));
-                } catch (\Exception $e) {}
+                } catch (\Exception $e) {
+                }
 
                 Log::info("[ARP] Device offline: {$device->ip_address}");
             }
@@ -192,19 +201,19 @@ class ArpScannerService
     private function autoCreateDevice(string $ip, string $mac): void
     {
         $manufacturer = $this->lookupManufacturer($mac);
-        $type         = $this->guessDeviceType($manufacturer, $ip);
-        $name         = $this->generateName($manufacturer, $ip, $type);
+        $type = $this->guessDeviceType($manufacturer, $ip);
+        $name = $this->generateName($manufacturer, $ip, $type);
 
         Device::create([
-            'name'        => $name,
-            'ip_address'  => $ip,
-            'type'        => $type,
-            'location'    => 'Home Network',
-            'description' => "Auto-discovered. MAC: {$mac}" .
+            'name' => $name,
+            'ip_address' => $ip,
+            'type' => $type,
+            'location' => 'Home Network',
+            'description' => "Auto-discovered. MAC: {$mac}".
                              ($manufacturer ? " | Manufacturer: {$manufacturer}" : ''),
-            'status'      => 'online',
-            'latency_ms'  => null,
-            'created_by'  => 1,
+            'status' => 'online',
+            'latency_ms' => null,
+            'created_by' => 1,
         ]);
 
         Log::info("[ARP] New device: {$ip} ({$mac}) — {$name}");
@@ -220,11 +229,14 @@ class ArpScannerService
                 return trim($m[1]);
             }
 
-            $oui      = substr(str_replace(':', '', $mac), 0, 6);
+            $oui = substr(str_replace(':', '', $mac), 0, 6);
             $response = Http::timeout(3)->get("https://api.macvendors.com/{$oui}");
 
-            if ($response->successful()) return trim($response->body());
-        } catch (\Exception $e) {}
+            if ($response->successful()) {
+                return trim($response->body());
+            }
+        } catch (\Exception $e) {
+        }
 
         return null;
     }
@@ -235,38 +247,84 @@ class ArpScannerService
     {
         $lastOctet = (int) (explode('.', $ip)[3] ?? 0);
 
-        if ($lastOctet === 1 || $lastOctet === 254) return 'router';
-        if (!$manufacturer) return 'other';
+        if ($lastOctet === 1 || $lastOctet === 254) {
+            return 'router';
+        }
+        if (! $manufacturer) {
+            return 'other';
+        }
 
         $m = strtolower($manufacturer);
 
-        if (str_contains($m, 'tp-link') || str_contains($m, 'netgear'))  return 'router';
-        if (str_contains($m, 'd-link')  || str_contains($m, 'linksys')) return 'router';
-        if (str_contains($m, 'mikrotik'))                                return 'switch';
-        if (str_contains($m, 'ubiquiti') || str_contains($m, 'unifi'))  return 'ap';
-        if (str_contains($m, 'ruckus')  || str_contains($m, 'aruba'))   return 'ap';
+        if (str_contains($m, 'tp-link') || str_contains($m, 'netgear')) {
+            return 'router';
+        }
+        if (str_contains($m, 'd-link') || str_contains($m, 'linksys')) {
+            return 'router';
+        }
+        if (str_contains($m, 'mikrotik')) {
+            return 'switch';
+        }
+        if (str_contains($m, 'ubiquiti') || str_contains($m, 'unifi')) {
+            return 'ap';
+        }
+        if (str_contains($m, 'ruckus') || str_contains($m, 'aruba')) {
+            return 'ap';
+        }
 
-        if (str_contains($m, 'xiaomi'))    return 'phone';
-        if (str_contains($m, 'oppo'))      return 'phone';
-        if (str_contains($m, 'vivo'))      return 'phone';
-        if (str_contains($m, 'realme'))    return 'phone';
-        if (str_contains($m, 'oneplus'))   return 'phone';
-        if (str_contains($m, 'motorola')) return 'phone';
-        if (str_contains($m, 'nokia'))    return 'phone';
+        if (str_contains($m, 'xiaomi')) {
+            return 'phone';
+        }
+        if (str_contains($m, 'oppo')) {
+            return 'phone';
+        }
+        if (str_contains($m, 'vivo')) {
+            return 'phone';
+        }
+        if (str_contains($m, 'realme')) {
+            return 'phone';
+        }
+        if (str_contains($m, 'oneplus')) {
+            return 'phone';
+        }
+        if (str_contains($m, 'motorola')) {
+            return 'phone';
+        }
+        if (str_contains($m, 'nokia')) {
+            return 'phone';
+        }
 
-        if (str_contains($m, 'apple')) return $lastOctet >= 50 ? 'phone' : 'laptop';
+        if (str_contains($m, 'apple')) {
+            return $lastOctet >= 50 ? 'phone' : 'laptop';
+        }
 
-        if (str_contains($m, 'hikvision') || str_contains($m, 'dahua'))   return 'cctv';
-        if (str_contains($m, 'axis')      || str_contains($m, 'reolink')) return 'cctv';
+        if (str_contains($m, 'hikvision') || str_contains($m, 'dahua')) {
+            return 'cctv';
+        }
+        if (str_contains($m, 'axis') || str_contains($m, 'reolink')) {
+            return 'cctv';
+        }
 
-        if (str_contains($m, 'epson')  || str_contains($m, 'canon'))   return 'printer';
-        if (str_contains($m, 'brother')|| str_contains($m, 'xerox'))   return 'printer';
+        if (str_contains($m, 'epson') || str_contains($m, 'canon')) {
+            return 'printer';
+        }
+        if (str_contains($m, 'brother') || str_contains($m, 'xerox')) {
+            return 'printer';
+        }
 
-        if (str_contains($m, 'roku')    || str_contains($m, 'tcl'))    return 'smarttv';
-        if (str_contains($m, 'hisense'))                               return 'smarttv';
+        if (str_contains($m, 'roku') || str_contains($m, 'tcl')) {
+            return 'smarttv';
+        }
+        if (str_contains($m, 'hisense')) {
+            return 'smarttv';
+        }
 
-        if (str_contains($m, 'intel')   || str_contains($m, 'realtek')) return 'pc';
-        if (str_contains($m, 'lenovo')  || str_contains($m, 'acer'))   return 'laptop';
+        if (str_contains($m, 'intel') || str_contains($m, 'realtek')) {
+            return 'pc';
+        }
+        if (str_contains($m, 'lenovo') || str_contains($m, 'acer')) {
+            return 'laptop';
+        }
 
         return 'other';
     }
@@ -284,6 +342,7 @@ class ArpScannerService
 
         if ($manufacturer) {
             $brand = explode(' ', trim($manufacturer))[0];
+
             return "{$brand} {$typeName} ({$ip})";
         }
 
@@ -303,21 +362,32 @@ class ArpScannerService
 
     private function shouldSkip(string $ip, string $mac): bool
     {
-        if (str_ends_with($ip, '.255'))   return true;
-        if ($ip === '255.255.255.255')    return true;
-        if (str_starts_with($mac, '01:') || str_starts_with($mac, 'ff:')) return true;
-        if ($mac === '00:00:00:00:00:00') return true;
-        if (!$this->isPrivateIp($ip))     return true; // skip public IPs
+        if (str_ends_with($ip, '.255')) {
+            return true;
+        }
+        if ($ip === '255.255.255.255') {
+            return true;
+        }
+        if (str_starts_with($mac, '01:') || str_starts_with($mac, 'ff:')) {
+            return true;
+        }
+        if ($mac === '00:00:00:00:00:00') {
+            return true;
+        }
+        if (! $this->isPrivateIp($ip)) {
+            return true;
+        } // skip public IPs
+
         return false;
     }
 
     public function getGroupingStats(): array
     {
         return [
-            'total_alerts'   => \App\Models\Alert::count(),
-            'grouped_alerts' => \App\Models\Alert::where('message', 'like', '%[GROUPED]%')->count(),
-            'cascades_found' => \App\Models\Alert::where('message', 'like', '%Network outage%')->count(),
-            'noise_reduced'  => 0,
+            'total_alerts' => Alert::count(),
+            'grouped_alerts' => Alert::where('message', 'like', '%[GROUPED]%')->count(),
+            'cascades_found' => Alert::where('message', 'like', '%Network outage%')->count(),
+            'noise_reduced' => 0,
         ];
     }
 }

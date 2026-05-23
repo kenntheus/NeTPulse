@@ -11,7 +11,7 @@ class AlertController extends Controller
     public function index(Request $request): JsonResponse
     {
         $alerts = Alert::with('device')
-            ->when($request->unread, fn($q) => $q->unread())
+            ->when($request->unread, fn ($q) => $q->unread())
             ->orderByDesc('created_at')
             ->paginate(30);
 
