@@ -43,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/uptime-chart', [DashboardController::class, 'uptimeChart']);
     });
 
+    Route::post('/devices/bulk-destroy', [DeviceController::class, 'bulkDestroy']);
     Route::apiResource('devices', DeviceController::class);
     Route::post('/devices/{device}/ping', [DeviceController::class, 'ping']);
 

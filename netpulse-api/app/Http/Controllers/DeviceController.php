@@ -81,6 +81,20 @@ class DeviceController extends Controller
         return response()->json(['message' => 'Device deleted.']);
     }
 
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $count = Device::whereIn('id', $data['ids'])->delete();
+
+        return response()->json(['message' => "{$count} device(s) deleted.", 'count' => $count]);
+    }
+
     public function ping(Device $device): JsonResponse
     {
         $log = $this->monitoring->checkDevice($device);
