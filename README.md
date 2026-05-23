@@ -1,4 +1,4 @@
-# NeTPulse — Network Monitoring Dashboard
+# NeTPulse - Network Monitoring Dashboard
 
 <div align="center">
 
