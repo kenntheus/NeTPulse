@@ -54,6 +54,12 @@ export function useDevices(filters = {}) {
     setDevices((prev) => prev.filter((d) => d.id !== id))
   }
 
+  // ── Bulk Delete ──────────────────────────────────────────────────────────
+  const bulkDeleteDevices = async (ids) => {
+    await api.post('/devices/bulk-destroy', { ids })
+    setDevices((prev) => prev.filter((d) => !ids.includes(d.id)))
+  }
+
   // ── Ping ─────────────────────────────────────────────────────────────────
   const pingDevice = async (id) => {
     const { data } = await api.post(`/devices/${id}/ping`)
@@ -92,6 +98,7 @@ export function useDevices(filters = {}) {
     addDevice,
     updateDevice,
     deleteDevice,
+    bulkDeleteDevices,
     pingDevice,
     applyRealtimeUpdate,
   }

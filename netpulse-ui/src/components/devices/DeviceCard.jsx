@@ -23,7 +23,7 @@ const TYPE_LABEL = {
   pc: 'Desktop PC', cctv: 'CCTV', printer: 'Printer', smarttv: 'Smart TV', other: 'Other',
 }
 
-export default function DeviceCard({ device, onEdit, onDelete, onPing, isAdmin = false }) {
+export default function DeviceCard({ device, onEdit, onDelete, onPing, isAdmin = false, selected = false, onSelect }) {
   const [pinging, setPinging] = useState(false)
 
   const handlePing = async () => {
@@ -37,11 +37,22 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, isAdmin =
     : 'text-green-600 dark:text-green-400'
 
   return (
-    <div className="group rounded-xl border p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
-
+    <div
+      className={`group rounded-xl border p-5 flex flex-col gap-4 hover:shadow-md transition-all duration-200 ${selected ? 'ring-2 ring-[var(--accent)]' : ''}`}
+      style={{ backgroundColor: 'var(--card-bg)', borderColor: selected ? 'var(--accent)' : 'var(--card-border)' }}
+    >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
+          {onSelect && (
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={() => onSelect(device.id)}
+              className="w-4 h-4 rounded accent-[var(--accent)] flex-shrink-0 cursor-pointer"
+              onClick={e => e.stopPropagation()}
+            />
+          )}
           <div className="w-9 h-9 rounded-lg flex items-center justify-center text-xl flex-shrink-0" style={{ backgroundColor: 'var(--muted-bg)' }}>
             {TYPE_ICON[device.type] ?? TYPE_ICON.other}
           </div>

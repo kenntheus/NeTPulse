@@ -14,7 +14,7 @@ import {
 export default function Devices() {
   const { isAdmin } = useAuth()
   const [filters, setFilters] = useState({ search: '', status: '', type: '' })
-  const { devices, loading, addDevice, updateDevice, deleteDevice, pingDevice, applyRealtimeUpdate } = useDevices(filters)
+  const { devices, loading, addDevice, updateDevice, deleteDevice, bulkDeleteDevices, pingDevice, applyRealtimeUpdate } = useDevices(filters)
   const { toasts, addToast, removeToast } = useToast()
 
   const [addOpen,      setAddOpen]      = useState(false)
@@ -23,6 +23,8 @@ export default function Devices() {
   const [deleting,     setDeleting]     = useState(false)
   const [scanning,     setScanning]     = useState(false)
   const [scanResult,   setScanResult]   = useState(null)
+  const [selected,     setSelected]     = useState(new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
 
   useEcho('network-monitoring', 'DeviceStatusUpdated', applyRealtimeUpdate)
 
@@ -59,6 +61,34 @@ export default function Devices() {
       addToast(`${device.name}: ${label}`, result.status === 'online' ? 'success' : 'error')
     } catch {
       addToast('Ping failed.', 'error')
+    }
+  }
+
+  const toggleSelect = (id) => setSelected(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
+
+  const toggleSelectAll = () => {
+    if (selected.size === visible.length && visible.length > 0) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(visible.map(d => d.id)))
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true)
+    try {
+      await bulkDeleteDevices([...selected])
+      const count = selected.size
+      setSelected(new Set())
+      addToast(`${count} device(s) deleted.`, 'success')
+    } catch {
+      addToast('Bulk delete failed.', 'error')
+    } finally {
+      setBulkDeleting(false)
     }
   }
 
@@ -213,6 +243,16 @@ export default function Devices() {
           </Button>
         )}
 
+        {isAdmin() && visible.length > 0 && (
+          <Button
+            size="sm"
+            variant={selected.size === visible.length ? 'primary' : 'ghost'}
+            onClick={toggleSelectAll}
+          >
+            {selected.size === visible.length ? 'Deselect all' : 'Select all'}
+          </Button>
+        )}
+
         <div className="ml-auto flex gap-2 text-xs">
           <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-1 rounded-md font-medium">
             {devices.filter(d => d.status === 'online').length} online
@@ -258,6 +298,8 @@ export default function Devices() {
               onEdit={setEditDevice}
               onDelete={setDeleteTarget}
               onPing={handlePing}
+              selected={selected.has(device.id)}
+              onSelect={isAdmin() ? toggleSelect : undefined}
             />
           ))}
         </div>
@@ -282,6 +324,17 @@ export default function Devices() {
         confirmLabel="Delete device"
         confirmVariant="danger"
       />
+
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-5 py-3 rounded-2xl shadow-2xl border" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+          <span className="text-sm font-medium text-gray-300">{selected.size} selected</span>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
+          <Button size="sm" variant="danger" loading={bulkDeleting} onClick={handleBulkDelete}>
+            Delete selected
+          </Button>
+        </div>
+      )}
 
       <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
