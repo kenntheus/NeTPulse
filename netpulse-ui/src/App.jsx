@@ -11,6 +11,7 @@ import Alerts     from './pages/Alerts'
 import AiInsights from './pages/AIInsights'
 import AiChat     from './pages/AiChat'
 import Account    from './pages/Account'
+import Webhooks   from './pages/Webhooks'
 import NotFound   from './pages/NotFound'
 
 function ProtectedRoute({ children }) {
@@ -45,7 +46,8 @@ function AppRoutes() {
         <Route path="/alerts"  element={<Alerts />} />
         <Route path="/ai"      element={<AiInsights />} />
         <Route path="/ai/chat" element={<AiChat />} />
-        <Route path="/account" element={<Account />} />
+        <Route path="/account"  element={<Account />} />
+        <Route path="/webhooks" element={<Webhooks />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
