@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\ArpScanController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
@@ -69,6 +70,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('webhooks', WebhookController::class)->except(['show']);
     Route::post('/webhooks/{webhook}/test', [WebhookController::class, 'test']);
+
+    Route::get('/audit-logs', [AuditLogController::class, 'index']);
 
     Route::post('/arp/scan', [ArpScanController::class, 'scan']);
     Route::post('/agent/push', [ArpScanController::class, 'receivePush']);

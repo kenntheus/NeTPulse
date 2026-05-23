@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\VerificationCodeMail;
 use App\Models\User;
+use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -158,6 +159,7 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('netpulse-token')->plainTextToken;
+        AuditService::log('auth.login', $request, $user, $user->name);
 
         return response()->json([
             'user' => $this->formatUser($user),
@@ -167,6 +169,7 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
+        AuditService::log('auth.logout', $request, $request->user(), $request->user()->name);
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Logged out successfully.']);

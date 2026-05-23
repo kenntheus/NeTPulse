@@ -12,6 +12,7 @@ import AiInsights from './pages/AIInsights'
 import AiChat     from './pages/AiChat'
 import Account    from './pages/Account'
 import Webhooks   from './pages/Webhooks'
+import AuditLog   from './pages/AuditLog'
 import NotFound   from './pages/NotFound'
 
 function ProtectedRoute({ children }) {
@@ -47,7 +48,8 @@ function AppRoutes() {
         <Route path="/ai"      element={<AiInsights />} />
         <Route path="/ai/chat" element={<AiChat />} />
         <Route path="/account"  element={<Account />} />
-        <Route path="/webhooks" element={<Webhooks />} />
+        <Route path="/webhooks"  element={<Webhooks />} />
+        <Route path="/audit-log" element={<AuditLog />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
