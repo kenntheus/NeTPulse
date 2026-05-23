@@ -21,13 +21,14 @@ const DEVICE_TYPES = [
   { value: 'other',    label: '◈   Other',           group: 'Other' },
 ]
 
-const EMPTY = { name: '', ip_address: '', type: 'other', location: '', description: '', notes: '', latency_threshold_ms: '' }
+const EMPTY = { name: '', ip_address: '', type: 'other', location: '', description: '', notes: '', tags: [], latency_threshold_ms: '' }
 
 export default function DeviceForm({ initialData = null, onSubmit, onCancel, submitLabel = 'Save device' }) {
   const [form,     setForm]     = useState(EMPTY)
   const [errors,   setErrors]   = useState({})
   const [loading,  setLoading]  = useState(false)
   const [apiError, setApiError] = useState('')
+  const [tagInput, setTagInput] = useState('')
 
   useEffect(() => {
     if (initialData) {
@@ -39,6 +40,7 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
         location:    initialData.location    ?? '',
         description:          initialData.description          ?? '',
         notes:                initialData.notes                ?? '',
+        tags:                 initialData.tags                 ?? [],
         latency_threshold_ms: initialData.latency_threshold_ms ?? '',
       })
     } else {
@@ -84,6 +86,15 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
       setLoading(false)
     }
   }
+
+  const addTag = () => {
+    const tag = tagInput.trim().toLowerCase().replace(/\s+/g, '-')
+    if (!tag || form.tags.includes(tag) || form.tags.length >= 10) return
+    setForm(f => ({ ...f, tags: [...f.tags, tag] }))
+    setTagInput('')
+  }
+
+  const removeTag = (tag) => setForm(f => ({ ...f, tags: f.tags.filter(t => t !== tag) }))
 
   // Group types for display
   const groups = [...new Set(DEVICE_TYPES.map(t => t.group))]
@@ -159,6 +170,34 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
           onChange={set('notes')}
           rows={2}
         />
+
+        {/* Tags */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Tags
+            <span className="ml-1 text-gray-400 font-normal">— press Enter or comma to add</span>
+          </label>
+          <div
+            className="flex flex-wrap gap-1.5 min-h-[38px] border rounded-lg px-2 py-1.5 focus-within:ring-2 focus-within:ring-[var(--accent)]/30"
+            style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
+          >
+            {form.tags.map(tag => (
+              <span key={tag} className="inline-flex items-center gap-1 bg-[var(--accent)]/20 text-[var(--accent)] text-xs px-2 py-0.5 rounded-full">
+                {tag}
+                <button type="button" onClick={() => removeTag(tag)} className="hover:text-red-400 leading-none">&times;</button>
+              </span>
+            ))}
+            <input
+              type="text"
+              value={tagInput}
+              onChange={e => setTagInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag() } }}
+              onBlur={addTag}
+              placeholder={form.tags.length === 0 ? 'production, critical, dmz…' : ''}
+              className="flex-1 min-w-[80px] bg-transparent text-sm text-white outline-none placeholder-gray-500"
+            />
+          </div>
+        </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
