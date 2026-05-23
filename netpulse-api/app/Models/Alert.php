@@ -10,11 +10,12 @@ class Alert extends Model
 {
     public $timestamps = false;
 
-    protected $fillable = ['device_id', 'type', 'message', 'is_read', 'resolved_at', 'created_at'];
+    protected $fillable = ['device_id', 'type', 'message', 'is_read', 'resolved_at', 'acknowledged_at', 'acknowledged_by', 'created_at'];
 
     protected $casts = [
         'is_read' => 'boolean',
         'resolved_at' => 'datetime',
+        'acknowledged_at' => 'datetime',
         'created_at' => 'datetime',
     ];
 

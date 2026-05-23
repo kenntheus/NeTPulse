@@ -56,6 +56,24 @@ export default function Alerts() {
     }
   }
 
+  const handleAcknowledge = async (alert) => {
+    try {
+      await api.patch(`/alerts/${alert.id}/acknowledge`)
+      setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, acknowledged_at: new Date().toISOString() } : a))
+    } catch {
+      addToast('Failed to acknowledge.', 'error')
+    }
+  }
+
+  const handleUnacknowledge = async (alert) => {
+    try {
+      await api.patch(`/alerts/${alert.id}/unacknowledge`)
+      setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, acknowledged_at: null } : a))
+    } catch {
+      addToast('Failed to unacknowledge.', 'error')
+    }
+  }
+
   const handleDelete = async (id) => {
     try {
       await api.delete(`/alerts/${id}`)
@@ -108,6 +126,8 @@ export default function Alerts() {
         : <AlertList
             alerts={alerts}
             onMarkRead={handleMarkRead}
+            onAcknowledge={handleAcknowledge}
+            onUnacknowledge={handleUnacknowledge}
             onDelete={handleDelete}
           />
       }

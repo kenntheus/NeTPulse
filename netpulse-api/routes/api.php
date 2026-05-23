@@ -53,6 +53,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/alerts', [AlertController::class, 'index']);
     Route::patch('/alerts/{alert}/read', [AlertController::class, 'markRead']);
     Route::post('/alerts/read-all', [AlertController::class, 'markAllRead']);
+    Route::patch('/alerts/{alert}/acknowledge', [AlertController::class, 'acknowledge']);
+    Route::patch('/alerts/{alert}/unacknowledge', [AlertController::class, 'unacknowledge']);
     Route::delete('/alerts/{alert}', [AlertController::class, 'destroy'])->middleware('role:admin');
 
     Route::post('/arp/scan', [ArpScanController::class, 'scan']);
