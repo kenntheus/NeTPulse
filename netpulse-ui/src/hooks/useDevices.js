@@ -50,7 +50,6 @@ export function useDevices(filters = {}) {
   // ── Delete ───────────────────────────────────────────────────────────────
   const deleteDevice = async (id) => {
     await api.delete(`/devices/${id}`)
-    // Optimistic removal
     setDevices((prev) => prev.filter((d) => d.id !== id))
   }
 
@@ -60,10 +59,22 @@ export function useDevices(filters = {}) {
     setDevices((prev) => prev.filter((d) => !ids.includes(d.id)))
   }
 
+  // ── Mute / Unmute ────────────────────────────────────────────────────────
+  const muteDevice = async (id, minutes = 60) => {
+    const { data } = await api.post(`/devices/${id}/mute`, { minutes })
+    setDevices((prev) => prev.map((d) => (d.id === id ? data.data : d)))
+    return data
+  }
+
+  const unmuteDevice = async (id) => {
+    const { data } = await api.post(`/devices/${id}/unmute`)
+    setDevices((prev) => prev.map((d) => (d.id === id ? data.data : d)))
+    return data
+  }
+
   // ── Ping ─────────────────────────────────────────────────────────────────
   const pingDevice = async (id) => {
     const { data } = await api.post(`/devices/${id}/ping`)
-    // Update latency and status in place
     setDevices((prev) =>
       prev.map((d) =>
         d.id === id
@@ -99,6 +110,8 @@ export function useDevices(filters = {}) {
     updateDevice,
     deleteDevice,
     bulkDeleteDevices,
+    muteDevice,
+    unmuteDevice,
     pingDevice,
     applyRealtimeUpdate,
   }

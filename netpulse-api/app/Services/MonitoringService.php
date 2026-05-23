@@ -109,13 +109,13 @@ class MonitoringService
             'checked_at' => now(),
         ]);
 
-        // Alert on status change
-        if ($device->status !== 'unknown' && $device->status !== $status) {
+        // Alert on status change (skip if device is muted)
+        if (! $device->isMuted() && $device->status !== 'unknown' && $device->status !== $status) {
             $this->handleStatusChange($device, $status);
         }
 
-        // High latency alert
-        if ($latencyMs && $latencyMs > 150) {
+        // High latency alert (skip if device is muted)
+        if (! $device->isMuted() && $latencyMs && $latencyMs > 150) {
             $this->handleHighLatency($device, $latencyMs);
         }
 

@@ -14,7 +14,7 @@ import {
 export default function Devices() {
   const { isAdmin } = useAuth()
   const [filters, setFilters] = useState({ search: '', status: '', type: '' })
-  const { devices, loading, addDevice, updateDevice, deleteDevice, bulkDeleteDevices, pingDevice, applyRealtimeUpdate } = useDevices(filters)
+  const { devices, loading, addDevice, updateDevice, deleteDevice, bulkDeleteDevices, muteDevice, unmuteDevice, pingDevice, applyRealtimeUpdate } = useDevices(filters)
   const { toasts, addToast, removeToast } = useToast()
 
   const [addOpen,      setAddOpen]      = useState(false)
@@ -89,6 +89,24 @@ export default function Devices() {
       addToast('Bulk delete failed.', 'error')
     } finally {
       setBulkDeleting(false)
+    }
+  }
+
+  const handleMute = async (device) => {
+    try {
+      await muteDevice(device.id, 60)
+      addToast(`"${device.name}" alerts muted for 1 hour.`, 'success')
+    } catch {
+      addToast('Failed to mute device.', 'error')
+    }
+  }
+
+  const handleUnmute = async (device) => {
+    try {
+      await unmuteDevice(device.id)
+      addToast(`"${device.name}" alerts unmuted.`, 'success')
+    } catch {
+      addToast('Failed to unmute device.', 'error')
     }
   }
 
@@ -300,6 +318,8 @@ export default function Devices() {
               onPing={handlePing}
               selected={selected.has(device.id)}
               onSelect={isAdmin() ? toggleSelect : undefined}
+              onMute={handleMute}
+              onUnmute={handleUnmute}
             />
           ))}
         </div>

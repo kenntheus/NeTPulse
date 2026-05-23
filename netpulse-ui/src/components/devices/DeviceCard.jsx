@@ -32,13 +32,15 @@ const TYPE_LABEL = {
   pc: 'Desktop PC', cctv: 'CCTV', printer: 'Printer', smarttv: 'Smart TV', other: 'Other',
 }
 
-export default function DeviceCard({ device, onEdit, onDelete, onPing, isAdmin = false, selected = false, onSelect }) {
+export default function DeviceCard({ device, onEdit, onDelete, onPing, onMute, onUnmute, isAdmin = false, selected = false, onSelect }) {
   const [pinging, setPinging] = useState(false)
 
   const handlePing = async () => {
     setPinging(true)
     try { await onPing(device) } finally { setPinging(false) }
   }
+
+  const isMuted = device.muted_until && new Date(device.muted_until) > new Date()
 
   const latencyColor = device.latency_ms == null ? 'text-gray-400'
     : device.latency_ms > 150 ? 'text-red-500'
@@ -73,6 +75,11 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, isAdmin =
           </div>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
+          {isMuted && (
+            <Badge variant="warning" title={`Muted until ${new Date(device.muted_until).toLocaleString()}`}>
+              🔕 Muted
+            </Badge>
+          )}
           <StatusDot status={device.status} animate />
           <Badge variant={device.status} className="capitalize">{device.status}</Badge>
         </div>
@@ -131,6 +138,23 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, isAdmin =
         </Button>
         {isAdmin && (
           <>
+            {isMuted && onUnmute ? (
+              <IconButton
+                icon={<span className="text-xs">🔔</span>}
+                onClick={() => onUnmute(device)}
+                title="Unmute alerts"
+                variant="ghost"
+                className="text-amber-400 hover:text-amber-200"
+              />
+            ) : onMute ? (
+              <IconButton
+                icon={<span className="text-xs">🔕</span>}
+                onClick={() => onMute(device)}
+                title="Mute alerts for 1 hour"
+                variant="ghost"
+                className="text-gray-400 hover:text-amber-400"
+              />
+            ) : null}
             <IconButton
               icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>}
               onClick={() => onEdit(device)}
