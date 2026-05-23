@@ -47,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/devices/bulk-destroy', [DeviceController::class, 'bulkDestroy']);
     Route::post('/devices/import', [DeviceController::class, 'import']);
+    Route::get('/devices/export', [DeviceController::class, 'export']);
     Route::apiResource('devices', DeviceController::class);
     Route::post('/devices/{device}/ping', [DeviceController::class, 'ping']);
     Route::get('/devices/{device}/uptime', [DeviceController::class, 'uptime']);

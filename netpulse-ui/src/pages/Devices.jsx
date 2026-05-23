@@ -114,6 +114,22 @@ export default function Devices() {
     }
   }
 
+  const handleExport = async () => {
+    try {
+      const { data } = await api.get('/devices/export', { responseType: 'blob' })
+      const url = URL.createObjectURL(data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `devices-${new Date().toISOString().slice(0, 10)}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      addToast('Export failed.', 'error')
+    }
+  }
+
   const handleImport = async () => {
     if (!importFile) return
     setImporting(true)
@@ -198,6 +214,13 @@ export default function Devices() {
                 Import CSV
               </Button>
             )}
+
+            <Button variant="secondary" onClick={handleExport} title="Download all devices as CSV">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export CSV
+            </Button>
 
             {isAdmin() && (
               <Button onClick={() => setAddOpen(true)}>
