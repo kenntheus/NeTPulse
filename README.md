@@ -4,12 +4,6 @@
 
 ![NeTPulse](https://img.shields.io/badge/NeTPulse-Network%20Monitor-2563eb?style=for-the-badge&logo=wifi&logoColor=white)
 
-[![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org)
-[![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-38BDF8?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
-[![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com)
-
 **A full-stack network monitoring dashboard built with Laravel + React.**  
 Monitor routers, switches, servers, and more in real time — with AI-powered insights and a chat assistant.
 
