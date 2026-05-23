@@ -7,6 +7,7 @@ use App\Services\MonitoringService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DeviceController extends Controller
 {
@@ -221,6 +222,32 @@ class DeviceController extends Controller
             'errors' => $errors,
             'message' => "{$created} device(s) imported.",
         ]);
+    }
+
+    public function export(): StreamedResponse
+    {
+        $devices = Device::orderBy('name')->get();
+        $filename = 'devices-'.now()->format('Y-m-d').'.csv';
+
+        return response()->streamDownload(function () use ($devices) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['name', 'ip_address', 'type', 'location', 'description', 'notes', 'status', 'latency_ms', 'last_checked_at', 'created_at']);
+            foreach ($devices as $d) {
+                fputcsv($out, [
+                    $d->name,
+                    $d->ip_address,
+                    $d->type,
+                    $d->location ?? '',
+                    $d->description ?? '',
+                    $d->notes ?? '',
+                    $d->status,
+                    $d->latency_ms ?? '',
+                    $d->last_checked_at?->toIso8601String() ?? '',
+                    $d->created_at->toIso8601String(),
+                ]);
+            }
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv']);
     }
 
     public function ping(Device $device): JsonResponse
