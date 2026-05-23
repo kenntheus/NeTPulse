@@ -110,42 +110,6 @@ node agent.js
 
 ---
 
-## Environment Variables
-
-### `netpulse-api/.env`
-
-```env
-APP_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:5173
-
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=netpulse
-DB_USERNAME=root
-DB_PASSWORD=
-
-MAIL_MAILER=resend
-RESEND_API_KEY=
-
-PUSHER_APP_ID=
-PUSHER_APP_KEY=
-PUSHER_APP_SECRET=
-PUSHER_APP_CLUSTER=mt1
-
-GROQ_API_KEY=        # console.groq.com — free
-```
-
-### `netpulse-agent/.env`
-
-```env
-API_URL=https://your-api.onrender.com
-API_TOKEN=           # generate from Account Settings in the dashboard
-INTERVAL=30          # seconds between scans
-```
-
----
-
 ## Running the Agent with PM2
 
 ```bash
@@ -160,15 +124,6 @@ pm2 save
 ## Deployment
 
 The API is deployed on **Render** using Docker. The frontend is deployed on **Vercel**.
-
-Key production environment variables to set on Render:
-
-```
-APP_ENV=production
-APP_DEBUG=false
-FRONTEND_URL=https://your-frontend.vercel.app
-GROQ_API_KEY=your_groq_key
-```
 
 ---
 
