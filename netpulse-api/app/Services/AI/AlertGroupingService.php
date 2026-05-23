@@ -4,6 +4,7 @@ namespace App\Services\AI;
 
 use App\Models\Alert;
 use App\Models\Device;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AlertGroupingService
@@ -52,7 +53,7 @@ class AlertGroupingService
         ]);
 
         Alert::whereIn('id', $recentOfflineAlerts->pluck('id'))
-            ->update(['message' => \DB::raw("CONCAT('[GROUPED] ', message)")]);
+            ->update(['message' => DB::raw("CONCAT('[GROUPED] ', message)")]);
 
         Log::warning("[AlertGrouping] Cascade detected: {$count} devices. {$message}");
     }
