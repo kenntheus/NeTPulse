@@ -1,8 +1,8 @@
-# 🌐 NetPulse — Network Monitoring Dashboard
+# 🌐 NeTPulse - Network Monitoring Dashboard
 
 <div align="center">
 
-![NetPulse Banner](https://img.shields.io/badge/NetPulse-Network%20Monitor-2563eb?style=for-the-badge\&logo=wifi\&logoColor=white)
+![NeTPulse Banner](https://img.shields.io/badge/NetPulse-Network%20Monitor-2563eb?style=for-the-badge\&logo=wifi\&logoColor=white)
 
 [![Laravel](https://img.shields.io/badge/Laravel-11-FF2D20?style=flat-square\&logo=laravel\&logoColor=white)](https://laravel.com)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square\&logo=react\&logoColor=black)](https://reactjs.org)
