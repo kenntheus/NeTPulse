@@ -42,9 +42,10 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, onMute, o
 
   const isMuted = device.muted_until && new Date(device.muted_until) > new Date()
 
+  const latencyLimit = device.latency_threshold_ms ?? 150
   const latencyColor = device.latency_ms == null ? 'text-gray-400'
-    : device.latency_ms > 150 ? 'text-red-500'
-    : device.latency_ms > 80  ? 'text-amber-500'
+    : device.latency_ms > latencyLimit        ? 'text-red-500'
+    : device.latency_ms > latencyLimit * 0.55 ? 'text-amber-500'
     : 'text-green-600 dark:text-green-400'
 
   return (

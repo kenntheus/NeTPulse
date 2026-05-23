@@ -42,6 +42,7 @@ class DeviceController extends Controller
             'location' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
+            'latency_threshold_ms' => ['nullable', 'integer', 'min:1', 'max:10000'],
         ]);
 
         $device = Device::create([...$data, 'created_by' => $request->user()->id]);
@@ -66,6 +67,7 @@ class DeviceController extends Controller
             'location' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
+            'latency_threshold_ms' => ['nullable', 'integer', 'min:1', 'max:10000'],
         ]);
 
         $device->update($data);

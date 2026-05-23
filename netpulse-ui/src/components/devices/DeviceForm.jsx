@@ -21,7 +21,7 @@ const DEVICE_TYPES = [
   { value: 'other',    label: '◈   Other',           group: 'Other' },
 ]
 
-const EMPTY = { name: '', ip_address: '', type: 'other', location: '', description: '', notes: '' }
+const EMPTY = { name: '', ip_address: '', type: 'other', location: '', description: '', notes: '', latency_threshold_ms: '' }
 
 export default function DeviceForm({ initialData = null, onSubmit, onCancel, submitLabel = 'Save device' }) {
   const [form,     setForm]     = useState(EMPTY)
@@ -37,8 +37,9 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
         ip_address:  initialData.ip_address  ?? '',
         type:        initialData.type        ?? 'other',
         location:    initialData.location    ?? '',
-        description: initialData.description ?? '',
-        notes:       initialData.notes       ?? '',
+        description:          initialData.description          ?? '',
+        notes:                initialData.notes                ?? '',
+        latency_threshold_ms: initialData.latency_threshold_ms ?? '',
       })
     } else {
       setForm(EMPTY)
@@ -158,6 +159,26 @@ export default function DeviceForm({ initialData = null, onSubmit, onCancel, sub
           onChange={set('notes')}
           rows={2}
         />
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Latency alert threshold (ms)
+            <span className="ml-1 text-gray-400 font-normal">— default 150ms</span>
+          </label>
+          <input
+            type="number"
+            min="1"
+            max="10000"
+            placeholder="150"
+            value={form.latency_threshold_ms}
+            onChange={set('latency_threshold_ms')}
+            className="w-full border rounded-lg px-3 py-2 text-sm text-white font-mono focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+            style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
+          />
+          {errors.latency_threshold_ms && (
+            <p className="text-xs text-red-500 mt-0.5">{errors.latency_threshold_ms}</p>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-3 mt-6 pt-5 border-t" style={{ borderColor: 'var(--card-border)' }}>
