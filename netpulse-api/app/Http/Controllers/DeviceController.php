@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Device;
+use App\Services\AuditService;
 use App\Services\MonitoringService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
@@ -78,6 +79,7 @@ class DeviceController extends Controller
 
         $device = Device::create([...$data, 'created_by' => $request->user()->id]);
         $this->monitoring->checkDevice($device);
+        AuditService::log('device.created', $request, $device, $device->name);
 
         return response()->json(['data' => $device->fresh()], 201);
     }
@@ -102,13 +104,15 @@ class DeviceController extends Controller
         ]);
 
         $device->update($data);
+        AuditService::log('device.updated', $request, $device, $device->name);
 
         return response()->json(['data' => $device->fresh()]);
     }
 
-    public function destroy(Device $device): JsonResponse
+    public function destroy(Request $request, Device $device): JsonResponse
     {
         $this->authorize('delete', $device);
+        AuditService::log('device.deleted', $request, $device, $device->name);
         $device->delete();
 
         return response()->json(['message' => 'Device deleted.']);
