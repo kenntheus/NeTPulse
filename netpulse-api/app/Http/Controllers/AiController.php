@@ -8,6 +8,7 @@ use App\Services\AI\DeviceFingerprintService;
 use App\Services\AI\NetworkAssistantService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AiController extends Controller
 {
@@ -27,7 +28,7 @@ class AiController extends Controller
         } catch (\Throwable $e) {
             $anomalies = [];
             $errors['anomalies'] = 'Anomaly service unavailable.';
-            \Log::error('[AI] Anomaly service error: '.$e->getMessage());
+            Log::error('[AI] Anomaly service error: '.$e->getMessage());
         }
 
         try {
@@ -35,7 +36,7 @@ class AiController extends Controller
         } catch (\Throwable $e) {
             $fingerprints = [];
             $errors['fingerprints'] = 'Fingerprint service unavailable.';
-            \Log::error('[AI] Fingerprint service error: '.$e->getMessage());
+            Log::error('[AI] Fingerprint service error: '.$e->getMessage());
         }
 
         try {
@@ -43,7 +44,7 @@ class AiController extends Controller
         } catch (\Throwable $e) {
             $grouping = [];
             $errors['grouping'] = 'Grouping service unavailable.';
-            \Log::error('[AI] Grouping service error: '.$e->getMessage());
+            Log::error('[AI] Grouping service error: '.$e->getMessage());
         }
 
         return response()->json([
