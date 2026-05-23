@@ -5,10 +5,12 @@ import AlertBadge from '../alerts/AlertBadge'
 import { Badge } from '../ui'
 
 const PAGE_TITLES = {
-  '/':        { title: 'Dashboard',  subtitle: 'Network overview & real-time status' },
-  '/devices': { title: 'Devices',    subtitle: 'Manage and monitor network devices'  },
-  '/logs':    { title: 'Logs',       subtitle: 'Historical monitoring records'       },
-  '/alerts':  { title: 'Alerts',     subtitle: 'Device status change events'         },
+  '/':        { title: 'Dashboard',    subtitle: 'Network overview & real-time status'    },
+  '/devices': { title: 'Devices',      subtitle: 'Manage and monitor network devices'     },
+  '/logs':    { title: 'Logs',         subtitle: 'Historical monitoring records'          },
+  '/alerts':  { title: 'Alerts',       subtitle: 'Device status change events'            },
+  '/ai':      { title: 'AI Insights',  subtitle: 'Anomaly detection & device fingerprinting' },
+  '/ai/chat': { title: 'AI Assistant', subtitle: 'Chat with your network data'            },
 }
 
 /**

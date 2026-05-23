@@ -57,9 +57,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/arp/scan', [ArpScanController::class, 'scan']);
     Route::post('/agent/push', [ArpScanController::class, 'receivePush']);
 
-    Route::prefix('ai')->middleware('throttle:10,1')->group(function () {
-        Route::get('/insights', [AiController::class, 'insights']);
-        Route::get('/anomalies', [AiController::class, 'anomalies']);
-        Route::get('/fingerprints', [AiController::class, 'fingerprints']);
+    Route::prefix('ai')->group(function () {
+        Route::middleware('throttle:10,1')->group(function () {
+            Route::get('/insights', [AiController::class, 'insights']);
+            Route::get('/anomalies', [AiController::class, 'anomalies']);
+            Route::get('/fingerprints', [AiController::class, 'fingerprints']);
+        });
+        Route::post('/chat', [AiController::class, 'chat'])->middleware('throttle:20,1');
     });
 });

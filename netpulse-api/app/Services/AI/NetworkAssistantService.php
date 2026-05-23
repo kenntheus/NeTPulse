@@ -16,48 +16,58 @@ class NetworkAssistantService
 
     public function chat(string $userMessage, array $history = []): string
     {
-        $apiKey = config('services.gemini.key');
+        $apiKey = config('services.groq.key');
 
         if (! $apiKey) {
-            return '⚠️ Gemini API key not configured. Add GEMINI_API_KEY to your .env file. Get a free key at aistudio.google.com.';
+            return '⚠️ Groq API key not configured. Add GROQ_API_KEY to your .env file. Get a free key at console.groq.com.';
         }
 
-        $systemPrompt = $this->buildSystemPrompt();
-        $contents = $this->buildContents($history, $userMessage);
+        $messages = $this->buildMessages($history, $userMessage);
 
         try {
             $response = Http::withHeaders([
+                'Authorization' => "Bearer {$apiKey}",
                 'Content-Type' => 'application/json',
-            ])->timeout(30)->post(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={$apiKey}",
-                [
-                    'system_instruction' => [
-                        'parts' => [['text' => $systemPrompt]],
-                    ],
-                    'contents' => $contents,
-                    'generationConfig' => ['maxOutputTokens' => 1024],
-                ]
-            );
+            ])->timeout(30)->post('https://api.groq.com/openai/v1/chat/completions', [
+                'model' => 'llama-3.3-70b-versatile',
+                'messages' => $messages,
+                'max_tokens' => 1024,
+            ]);
 
             if (! $response->successful()) {
-                Log::error('[AI Assistant] Gemini API error: '.$response->body());
+                Log::error('[AI Assistant] Groq API error: '.$response->body());
                 $status = $response->status();
                 if ($status === 429) {
-                    return '⏳ Rate limit reached. The free tier allows a limited number of requests per minute — please wait a moment and try again.';
+                    return '⏳ Rate limit reached. Please wait a moment and try again.';
                 }
 
-                return "I'm having trouble connecting to Gemini right now (HTTP {$status}). Please try again.";
+                return "I'm having trouble connecting right now (HTTP {$status}). Please try again.";
             }
 
-            $data = $response->json();
-
-            return $data['candidates'][0]['content']['parts'][0]['text'] ?? 'No response received.';
+            return $response->json('choices.0.message.content') ?? 'No response received.';
 
         } catch (\Exception $e) {
             Log::error('[AI Assistant] Exception: '.$e->getMessage());
 
             return 'Connection error. Please check your API key and try again.';
         }
+    }
+
+    private function buildMessages(array $history, string $userMessage): array
+    {
+        $messages = [
+            ['role' => 'system', 'content' => $this->buildSystemPrompt()],
+        ];
+
+        foreach (array_slice($history, -10) as $turn) {
+            if (isset($turn['role'], $turn['content'])) {
+                $messages[] = ['role' => $turn['role'], 'content' => (string) $turn['content']];
+            }
+        }
+
+        $messages[] = ['role' => 'user', 'content' => $userMessage];
+
+        return $messages;
     }
 
     private function buildSystemPrompt(): string
@@ -88,7 +98,7 @@ class NetworkAssistantService
         $offCount = $offline->count();
 
         return <<<PROMPT
-You are NetPulse AI, an intelligent network monitoring assistant. You have access to real-time data about the user's network.
+You are NeTPulse AI, an intelligent network monitoring assistant. You have real-time access to the user's network data.
 
 Current time: {$now}
 
@@ -103,35 +113,18 @@ DEVICES:
 RECENT ALERTS (last 10):
 {$alertLines}
 
-LATENCY BASELINES (anomaly detection data):
+LATENCY BASELINES:
 {$anomalyLines}
 
 YOUR ROLE:
 - Answer questions about network health, device status, and performance
-- Identify patterns and potential issues in the data above
+- Identify patterns and potential issues using the data above
 - Give specific, actionable recommendations
 - Keep answers concise and practical
-- Reference actual device names and numbers from the data
-- If asked about something outside the network data, be helpful but clarify you're an AI assistant
+- Reference actual device names, IPs, and numbers from the data
+- Format responses clearly — use bullet points or short paragraphs
 
-Always be specific — use real device names, IPs, and numbers from the data above.
+Always be specific — use real device names and numbers from the data.
 PROMPT;
-    }
-
-    private function buildContents(array $history, string $userMessage): array
-    {
-        $contents = [];
-
-        // Gemini uses "model" for assistant turns; map accordingly
-        foreach (array_slice($history, -10) as $turn) {
-            if (isset($turn['role'], $turn['content'])) {
-                $role = $turn['role'] === 'assistant' ? 'model' : 'user';
-                $contents[] = ['role' => $role, 'parts' => [['text' => $turn['content']]]];
-            }
-        }
-
-        $contents[] = ['role' => 'user', 'parts' => [['text' => $userMessage]]];
-
-        return $contents;
     }
 }
