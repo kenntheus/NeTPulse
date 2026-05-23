@@ -111,85 +111,90 @@ export default function Dashboard() {
       )}
 
       {/* ── Summary cards ─────────────────────────────────────────── */}
-      {show('summary') && <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard label="Total devices"  value={summary?.total}         icon="⬡" color="blue"  />
-        <StatCard label="Online"          value={summary?.online}        icon="🟢" color="green" />
-        <StatCard label="Offline"         value={summary?.offline}       icon="🔴" color="red"   />
-        <StatCard label="Unread alerts"   value={summary?.unread_alerts} icon="⚑" color="amber" />
-      </div>}
+      {show('summary') && (
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          <StatCard label="Total devices"  value={summary?.total}         icon="⬡" color="blue"  />
+          <StatCard label="Online"          value={summary?.online}        icon="🟢" color="green" />
+          <StatCard label="Offline"         value={summary?.offline}       icon="🔴" color="red"   />
+          <StatCard label="Unread alerts"   value={summary?.unread_alerts} icon="⚑" color="amber" />
+        </div>
+      )}
 
       {/* ── Charts ────────────────────────────────────────────────── */}
-      {(show('latency') || show('uptime')) && <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* Latency area chart */}
-        {show('latency') && <div className="rounded-xl border p-5" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Avg Latency</h3>
-              <p className="text-xs text-gray-500">Last 24 hours (ms)</p>
+      {(show('latency') || show('uptime')) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {show('latency') && (
+            <div className="rounded-xl border p-5" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Avg Latency</h3>
+                  <p className="text-xs text-gray-500">Last 24 hours (ms)</p>
+                </div>
+                <Badge variant="default">Live</Badge>
+              </div>
+              {chartLoading ? (
+                <div className="h-48 flex items-center justify-center text-gray-400 text-sm">Loading chart…</div>
+              ) : latency.length === 0 ? (
+                <div className="h-48 flex items-center justify-center text-gray-400 text-sm">No data yet — waiting for first ping</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={190}>
+                  <AreaChart data={latency} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="latGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}   />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" className="dark:stroke-gray-800" />
+                    <XAxis dataKey="time" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Area
+                      type="monotone"
+                      dataKey="avg_latency"
+                      name="avg_latency"
+                      stroke="#3b82f6"
+                      fill="url(#latGrad)"
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
-            <Badge variant="default">Live</Badge>
-          </div>
-          {chartLoading ? (
-            <div className="h-48 flex items-center justify-center text-gray-400 text-sm">Loading chart…</div>
-          ) : latency.length === 0 ? (
-            <div className="h-48 flex items-center justify-center text-gray-400 text-sm">No data yet — waiting for first ping</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={190}>
-              <AreaChart data={latency} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="latGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}   />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" className="dark:stroke-gray-800" />
-                <XAxis dataKey="time" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                <Tooltip content={<ChartTooltip />} />
-                <Area
-                  type="monotone"
-                  dataKey="avg_latency"
-                  name="avg_latency"
-                  stroke="#3b82f6"
-                  fill="url(#latGrad)"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
           )}
-        </div>}
-
-        {/* Uptime bar chart */}
-        {show('uptime') && <div className="rounded-xl border p-5" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Uptime %</h3>
-              <p className="text-xs text-gray-500">Last 7 days</p>
+          {show('uptime') && (
+            <div className="rounded-xl border p-5" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Uptime %</h3>
+                  <p className="text-xs text-gray-500">Last 7 days</p>
+                </div>
+              </div>
+              {chartLoading ? (
+                <div className="h-48 flex items-center justify-center text-gray-400 text-sm">Loading chart…</div>
+              ) : uptime.length === 0 ? (
+                <div className="h-48 flex items-center justify-center text-gray-400 text-sm">No data yet</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={190}>
+                  <BarChart data={uptime} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" className="dark:stroke-gray-800" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => `${v}%`} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Bar dataKey="uptime" name="uptime" fill="#22c55e" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
-          </div>
-          {chartLoading ? (
-            <div className="h-48 flex items-center justify-center text-gray-400 text-sm">Loading chart…</div>
-          ) : uptime.length === 0 ? (
-            <div className="h-48 flex items-center justify-center text-gray-400 text-sm">No data yet</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={190}>
-              <BarChart data={uptime} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" className="dark:stroke-gray-800" />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => `${v}%`} />
-                <Tooltip content={<ChartTooltip />} />
-                <Bar dataKey="uptime" name="uptime" fill="#22c55e" radius={[4, 4, 0, 0]} maxBarSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
           )}
-        </div>}
-      </div>}
+        </div>
+      )}
 
       {/* ── Device table ──────────────────────────────────────────── */}
-      {show('devices') && <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+      {show('devices') && (
+        <div className="rounded-xl border overflow-hidden" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
         <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--card-border)' }}>
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">All Devices</h3>
           <span className="text-xs text-gray-400 px-2 py-1 rounded-md" style={{ backgroundColor: 'var(--muted-bg)' }}>{devices.length} total</span>
@@ -243,7 +248,8 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-      </div>}
+      </div>
+      )}
     </div>
   )
 }
