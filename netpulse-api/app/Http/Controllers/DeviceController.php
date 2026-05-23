@@ -41,6 +41,7 @@ class DeviceController extends Controller
             'type' => ['required', 'in:'.implode(',', self::VALID_TYPES)],
             'location' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string'],
         ]);
 
         $device = Device::create([...$data, 'created_by' => $request->user()->id]);
@@ -64,6 +65,7 @@ class DeviceController extends Controller
             'type' => ['sometimes', 'in:'.implode(',', self::VALID_TYPES)],
             'location' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string'],
         ]);
 
         $device->update($data);

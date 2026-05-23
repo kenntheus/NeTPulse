@@ -84,10 +84,18 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, isAdmin =
         </div>
       </div>
 
-      {device.description && (
-        <p className="text-xs text-gray-400 leading-relaxed line-clamp-2 border-t pt-3 -mt-1" style={{ borderColor: 'var(--card-border)' }}>
-          {device.description}
-        </p>
+      {(device.description || device.notes) && (
+        <div className="border-t pt-3 -mt-1 space-y-1.5" style={{ borderColor: 'var(--card-border)' }}>
+          {device.description && (
+            <p className="text-xs text-gray-400 leading-relaxed line-clamp-2">{device.description}</p>
+          )}
+          {device.notes && (
+            <div className="flex items-start gap-1.5">
+              <span className="text-amber-500 text-xs mt-0.5 flex-shrink-0">📝</span>
+              <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed line-clamp-2">{device.notes}</p>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Actions */}
