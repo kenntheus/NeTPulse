@@ -47,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/devices/import', [DeviceController::class, 'import']);
     Route::apiResource('devices', DeviceController::class);
     Route::post('/devices/{device}/ping', [DeviceController::class, 'ping']);
+    Route::get('/devices/{device}/uptime', [DeviceController::class, 'uptime']);
     Route::post('/devices/{device}/mute', [DeviceController::class, 'mute']);
     Route::post('/devices/{device}/unmute', [DeviceController::class, 'unmute']);
 

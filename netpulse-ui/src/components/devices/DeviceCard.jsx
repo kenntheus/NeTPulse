@@ -110,6 +110,24 @@ export default function DeviceCard({ device, onEdit, onDelete, onPing, onMute, o
             {timeAgo(device.last_checked_at) ?? '—'}
           </p>
         </div>
+        <div className="col-span-2">
+          <p className="text-gray-400 dark:text-gray-500 mb-1">Uptime (7d)</p>
+          {device.uptime_7d != null ? (
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${device.uptime_7d >= 99 ? 'bg-green-500' : device.uptime_7d >= 95 ? 'bg-amber-400' : 'bg-red-500'}`}
+                  style={{ width: `${device.uptime_7d}%` }}
+                />
+              </div>
+              <span className={`font-mono font-semibold text-xs ${device.uptime_7d >= 99 ? 'text-green-500' : device.uptime_7d >= 95 ? 'text-amber-400' : 'text-red-500'}`}>
+                {device.uptime_7d}%
+              </span>
+            </div>
+          ) : (
+            <p className="font-medium text-gray-600 dark:text-gray-400">—</p>
+          )}
+        </div>
       </div>
 
       {(device.description || device.notes) && (
