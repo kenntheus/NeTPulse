@@ -13,7 +13,7 @@
 **A full-stack network monitoring dashboard built with Laravel + React.**  
 Monitor routers, switches, servers, and more in real time — with AI-powered insights and a chat assistant.
 
-[Live Demo](https://ne-t-pulse.vercel.app) · [API](https://netpulse-1.onrender.com)
+[Live Demo](https://netpulse-web.vercel.app) · [API](https://netpulse-1.onrender.com)
 
 </div>
 
