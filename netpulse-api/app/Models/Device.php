@@ -12,6 +12,8 @@ class Device extends Model
 {
     use HasFactory;
 
+    protected $appends = ['is_under_maintenance'];
+
     protected $fillable = [
         'name', 'ip_address', 'type', 'location',
         'description', 'notes', 'status', 'latency_ms',
@@ -26,6 +28,24 @@ class Device extends Model
     public function isMuted(): bool
     {
         return $this->muted_until !== null && $this->muted_until->isFuture();
+    }
+
+    public function getIsUnderMaintenanceAttribute(): bool
+    {
+        return $this->maintenanceWindows()
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now())
+            ->exists();
+    }
+
+    public function isUnderMaintenance(): bool
+    {
+        return $this->getIsUnderMaintenanceAttribute();
+    }
+
+    public function maintenanceWindows(): HasMany
+    {
+        return $this->hasMany(MaintenanceWindow::class)->orderBy('starts_at');
     }
 
     public function logs(): HasMany

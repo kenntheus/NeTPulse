@@ -7,6 +7,7 @@ use App\Http\Controllers\ArpScanController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\MaintenanceWindowController;
 use App\Http\Controllers\MonitoringLogController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +52,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/devices/{device}/uptime', [DeviceController::class, 'uptime']);
     Route::post('/devices/{device}/mute', [DeviceController::class, 'mute']);
     Route::post('/devices/{device}/unmute', [DeviceController::class, 'unmute']);
+    Route::get('/devices/{device}/maintenance-windows', [MaintenanceWindowController::class, 'index']);
+    Route::post('/devices/{device}/maintenance-windows', [MaintenanceWindowController::class, 'store']);
+    Route::delete('/maintenance-windows/{maintenanceWindow}', [MaintenanceWindowController::class, 'destroy']);
 
     Route::get('/devices/{device}/logs', [MonitoringLogController::class, 'index']);
     Route::get('/logs/export', [MonitoringLogController::class, 'export']);
