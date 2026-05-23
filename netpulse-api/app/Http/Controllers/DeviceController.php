@@ -121,6 +121,76 @@ class DeviceController extends Controller
         return response()->json(['data' => $device->fresh(), 'message' => 'Alerts unmuted.']);
     }
 
+    public function import(Request $request): JsonResponse
+    {
+        $this->authorize('create', Device::class);
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:csv,txt', 'max:512'],
+        ]);
+
+        $handle = fopen($request->file('file')->getRealPath(), 'r');
+        $header = array_map('strtolower', array_map('trim', fgetcsv($handle)));
+
+        foreach (['name', 'ip_address'] as $col) {
+            if (! in_array($col, $header)) {
+                fclose($handle);
+
+                return response()->json(['message' => 'CSV must have columns: name, ip_address'], 422);
+            }
+        }
+
+        $created = 0;
+        $errors = [];
+        $row = 1;
+
+        while (($line = fgetcsv($handle)) !== false) {
+            $row++;
+            if (count($line) < count($header)) {
+                $errors[] = "Row {$row}: not enough columns.";
+
+                continue;
+            }
+
+            $data = array_combine($header, array_map('trim', $line));
+
+            if (empty($data['name']) || empty($data['ip_address'])) {
+                $errors[] = "Row {$row}: name and ip_address are required.";
+
+                continue;
+            }
+
+            if (! filter_var($data['ip_address'], FILTER_VALIDATE_IP)) {
+                $errors[] = "Row {$row}: invalid IP '{$data['ip_address']}'.";
+
+                continue;
+            }
+
+            $type = $data['type'] ?? 'other';
+            if (! in_array($type, self::VALID_TYPES)) {
+                $type = 'other';
+            }
+
+            Device::create([
+                'name' => substr($data['name'], 0, 100),
+                'ip_address' => $data['ip_address'],
+                'type' => $type,
+                'location' => isset($data['location']) ? substr($data['location'], 0, 150) : null,
+                'description' => $data['description'] ?? null,
+                'created_by' => $request->user()->id,
+            ]);
+            $created++;
+        }
+
+        fclose($handle);
+
+        return response()->json([
+            'created' => $created,
+            'errors' => $errors,
+            'message' => "{$created} device(s) imported.",
+        ]);
+    }
+
     public function ping(Device $device): JsonResponse
     {
         $log = $this->monitoring->checkDevice($device);

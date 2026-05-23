@@ -25,6 +25,10 @@ export default function Devices() {
   const [scanResult,   setScanResult]   = useState(null)
   const [selected,     setSelected]     = useState(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [importOpen,   setImportOpen]   = useState(false)
+  const [importFile,   setImportFile]   = useState(null)
+  const [importing,    setImporting]    = useState(false)
+  const [importResult, setImportResult] = useState(null)
 
   useEcho('network-monitoring', 'DeviceStatusUpdated', applyRealtimeUpdate)
 
@@ -110,6 +114,25 @@ export default function Devices() {
     }
   }
 
+  const handleImport = async () => {
+    if (!importFile) return
+    setImporting(true)
+    setImportResult(null)
+    try {
+      const form = new FormData()
+      form.append('file', importFile)
+      const { data } = await api.post('/devices/import', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setImportResult(data)
+      if (data.created > 0) window.location.reload()
+    } catch (err) {
+      addToast(err?.response?.data?.message ?? 'Import failed.', 'error')
+    } finally {
+      setImporting(false)
+    }
+  }
+
   // ARP network scan
   const handleArpScan = async () => {
     setScanning(true)
@@ -164,6 +187,15 @@ export default function Devices() {
                   </svg>
                 )}
                 {scanning ? 'Scanning…' : 'Scan Network'}
+              </Button>
+            )}
+
+            {isAdmin() && (
+              <Button variant="secondary" onClick={() => { setImportOpen(true); setImportFile(null); setImportResult(null) }}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Import CSV
               </Button>
             )}
 
@@ -355,6 +387,46 @@ export default function Devices() {
           </Button>
         </div>
       )}
+
+      {/* CSV Import modal */}
+      <Modal open={importOpen} onClose={() => setImportOpen(false)} title="Import devices from CSV">
+        <div className="space-y-4">
+          <div className="text-xs text-gray-400 bg-[var(--muted-bg)] rounded-lg p-3 font-mono leading-relaxed">
+            Expected columns: <span className="text-[var(--accent)]">name</span>, <span className="text-[var(--accent)]">ip_address</span>, type, location, description<br />
+            Types: router, switch, server, firewall, ap, phone, tablet, laptop, pc, cctv, printer, smarttv, other
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">CSV file</label>
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              onChange={e => { setImportFile(e.target.files[0]); setImportResult(null) }}
+              className="w-full text-sm text-gray-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-[var(--accent)] file:text-white hover:file:bg-[var(--accent-hover)] cursor-pointer"
+            />
+          </div>
+
+          {importResult && (
+            <div className={`rounded-lg p-3 text-sm ${importResult.created > 0 ? 'bg-green-900/20 border border-green-800 text-green-300' : 'bg-amber-900/20 border border-amber-800 text-amber-300'}`}>
+              <p className="font-medium">{importResult.message}</p>
+              {importResult.errors?.length > 0 && (
+                <ul className="mt-2 text-xs space-y-0.5 text-amber-400">
+                  {importResult.errors.map((e, i) => <li key={i}>• {e}</li>)}
+                </ul>
+              )}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2 border-t" style={{ borderColor: 'var(--card-border)' }}>
+            <Button onClick={handleImport} loading={importing} disabled={!importFile} className="flex-1 justify-center">
+              Import
+            </Button>
+            <Button variant="secondary" onClick={() => setImportOpen(false)} disabled={importing}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>

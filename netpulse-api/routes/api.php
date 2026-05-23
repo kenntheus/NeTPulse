@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::post('/devices/bulk-destroy', [DeviceController::class, 'bulkDestroy']);
+    Route::post('/devices/import', [DeviceController::class, 'import']);
     Route::apiResource('devices', DeviceController::class);
     Route::post('/devices/{device}/ping', [DeviceController::class, 'ping']);
     Route::post('/devices/{device}/mute', [DeviceController::class, 'mute']);
