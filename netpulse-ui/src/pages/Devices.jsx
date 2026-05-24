@@ -185,7 +185,7 @@ export default function Devices() {
   })
 
   return (
-    <div className="p-6 max-w-screen-xl mx-auto space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
 
       <PageHeader
         title="Devices"
@@ -266,7 +266,7 @@ export default function Devices() {
             </div>
             <button
               onClick={() => setScanResult(null)}
-              className="text-blue-400 hover:text-blue-600 text-xl leading-none flex-shrink-0"
+              className="text-blue-400 hover:text-blue-600 text-xl leading-none shrink-0"
             >
               ×
             </button>
@@ -285,7 +285,7 @@ export default function Devices() {
             placeholder="Search name or IP…"
             value={filters.search}
             onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
-            className="pl-9 pr-4 py-2 text-sm border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 w-52"
+            className="pl-9 pr-4 py-2 text-sm border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-(--accent)/30 w-52"
             style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
           />
         </div>
@@ -425,8 +425,8 @@ export default function Devices() {
       {/* CSV Import modal */}
       <Modal open={importOpen} onClose={() => setImportOpen(false)} title="Import devices from CSV">
         <div className="space-y-4">
-          <div className="text-xs text-gray-400 bg-[var(--muted-bg)] rounded-lg p-3 font-mono leading-relaxed">
-            Expected columns: <span className="text-[var(--accent)]">name</span>, <span className="text-[var(--accent)]">ip_address</span>, type, location, description<br />
+          <div className="text-xs text-gray-400 bg-(--muted-bg) rounded-lg p-3 font-mono leading-relaxed">
+            Expected columns: <span className="text-(--accent)">name</span>, <span className="text-(--accent)">ip_address</span>, type, location, description<br />
             Types: router, switch, server, firewall, ap, phone, tablet, laptop, pc, cctv, printer, smarttv, other
           </div>
 
@@ -436,7 +436,7 @@ export default function Devices() {
               type="file"
               accept=".csv,text/csv"
               onChange={e => { setImportFile(e.target.files[0]); setImportResult(null) }}
-              className="w-full text-sm text-gray-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-[var(--accent)] file:text-white hover:file:bg-[var(--accent-hover)] cursor-pointer"
+              className="w-full text-sm text-gray-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-(--accent) file:text-white hover:file:bg-(--accent-hover) cursor-pointer"
             />
           </div>
 
