@@ -25,10 +25,10 @@ function Field({ label, error, className = '', ...props }) {
       {label && <label className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</label>}
       <input
         className={`w-full border rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-500
-          focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 transition-colors
+          focus:outline-none focus:ring-2 focus:ring-(--accent)/30 transition-colors
           ${error
             ? 'border-red-400'
-            : 'border-[var(--card-border)] focus:border-[var(--accent)]'
+            : 'border-(--card-border) focus:border-(--accent)'
           } ${className}`}
         style={{ backgroundColor: 'var(--muted-bg)' }}
         {...props}
@@ -511,7 +511,7 @@ function AgentToken({ addToast }) {
             </code>
             <button
               onClick={copy}
-              className="shrink-0 px-3 py-2.5 text-sm font-medium rounded-lg border text-gray-300 transition-colors hover:bg-[var(--muted-bg)]"
+              className="shrink-0 px-3 py-2.5 text-sm font-medium rounded-lg border text-gray-300 transition-colors hover:bg-(--muted-bg)"
               style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
             >
               {copied ? '✓ Copied' : 'Copy'}
@@ -638,14 +638,14 @@ function TwoFactorSettings({ addToast }) {
             <img src={qrUrl} alt="TOTP QR code" className="w-36 h-36 rounded-lg border" style={{ borderColor: 'var(--card-border)' }} />
             <div className="flex-1 space-y-2">
               <p className="text-xs text-gray-400">Or enter the secret manually:</p>
-              <code className="block text-xs font-mono bg-[var(--muted-bg)] px-3 py-2 rounded-lg text-[var(--accent)] tracking-widest break-all">{secret}</code>
+              <code className="block text-xs font-mono bg-(--muted-bg) px-3 py-2 rounded-lg text-(--accent) tracking-widest break-all">{secret}</code>
             </div>
           </div>
           {error && <p className="text-xs text-red-400">{error}</p>}
           <div className="flex gap-2">
             <input type="text" inputMode="numeric" maxLength={6} placeholder="6-digit code" value={code}
               onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
-              className="flex-1 border rounded-lg px-3 py-2 text-sm text-white font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              className="flex-1 border rounded-lg px-3 py-2 text-sm text-white font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-(--accent)/30"
               style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             />
             <button onClick={confirmEnable} disabled={loading || code.length < 6}
@@ -670,7 +670,7 @@ function TwoFactorSettings({ addToast }) {
           <div className="flex gap-2">
             <input type="text" inputMode="numeric" maxLength={6} placeholder="6-digit code" value={code}
               onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
-              className="flex-1 border rounded-lg px-3 py-2 text-sm text-white font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              className="flex-1 border rounded-lg px-3 py-2 text-sm text-white font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-(--accent)/30"
               style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             />
             <button onClick={confirmDisable} disabled={loading || code.length < 6}
@@ -711,7 +711,7 @@ export default function Account() {
 
       {/* Profile summary */}
       <div className="rounded-xl border p-5 flex items-center gap-4" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
-        <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0" style={{ backgroundColor: 'var(--accent)' }}>
+        <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold shrink-0" style={{ backgroundColor: 'var(--accent)' }}>
           {currentUser?.name?.[0]?.toUpperCase() ?? 'U'}
         </div>
         <div>
