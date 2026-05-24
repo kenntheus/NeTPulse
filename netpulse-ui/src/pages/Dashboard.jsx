@@ -64,7 +64,7 @@ export default function Dashboard() {
   if (devicesLoading && !summary) return <LoadingPage />
 
   return (
-    <div className="p-6 space-y-6 max-w-screen-xl mx-auto">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
 
       {/* ── Header row ────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
@@ -76,8 +76,8 @@ export default function Dashboard() {
           onClick={() => setCustomizing(c => !c)}
           className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all border ${
             customizing
-              ? 'text-white border-[var(--accent)] bg-[var(--accent)]'
-              : 'text-gray-400 border-[var(--card-border)] hover:text-white hover:bg-white/10'
+              ? 'text-white border-(--accent) bg-(--accent)'
+              : 'text-gray-400 border-(--card-border) hover:text-white hover:bg-white/10'
           }`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,11 +98,11 @@ export default function Dashboard() {
                 onClick={() => toggle(key)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
                   visible
-                    ? 'text-white bg-[var(--accent)]/20 border-[var(--accent)]/40'
-                    : 'text-gray-500 bg-transparent border-[var(--card-border)] hover:border-gray-500'
+                    ? 'text-white bg-(--accent)/20 border-(--accent)/40'
+                    : 'text-gray-500 bg-transparent border-(--card-border) hover:border-gray-500'
                 }`}
               >
-                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${visible ? 'bg-[var(--accent)]' : 'bg-gray-600'}`} />
+                <span className={`w-2 h-2 rounded-full shrink-0 ${visible ? 'bg-(--accent)' : 'bg-gray-600'}`} />
                 {label}
               </button>
             ))}
@@ -209,9 +209,9 @@ export default function Dashboard() {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--card-border)]">
+            <tbody className="divide-y divide-(--card-border)">
               {devices.map(d => (
-                <tr key={d.id} className="hover:bg-[var(--muted-bg)] transition-colors">
+                <tr key={d.id} className="hover:bg-(--muted-bg) transition-colors">
                   <td className="py-3 px-4">
                     <StatusDot status={d.status} animate />
                   </td>
