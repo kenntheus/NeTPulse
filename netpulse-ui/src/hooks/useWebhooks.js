@@ -15,6 +15,7 @@ export function useWebhooks() {
     }
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetch() }, [fetch])
 
   const addWebhook = async (payload) => {

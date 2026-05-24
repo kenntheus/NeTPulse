@@ -35,6 +35,7 @@ export default function AuditLog() {
     }
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchLogs(page) }, [fetchLogs, page])
 
   return (

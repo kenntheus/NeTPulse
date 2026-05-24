@@ -16,6 +16,7 @@ export function useMaintenanceWindows(deviceId) {
     }
   }, [deviceId])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetch() }, [fetch])
 
   const addWindow = async (payload) => {
