@@ -86,7 +86,7 @@ export default function Webhooks() {
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               required
-              className="w-full border rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-(--accent)/30"
               style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             />
           </div>
@@ -98,7 +98,7 @@ export default function Webhooks() {
               value={form.url}
               onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
               required
-              className="w-full border rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-(--accent)/30"
               style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             />
           </div>
@@ -112,7 +112,7 @@ export default function Webhooks() {
                 key={event}
                 type="button"
                 onClick={() => toggleEvent(event)}
-                className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${form.events.includes(event) ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--card-border)] text-gray-400 hover:border-[var(--accent)]'}`}
+                className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${form.events.includes(event) ? 'bg-(--accent) border-(--accent) text-white' : 'border-(--card-border) text-gray-400 hover:border-(--accent)'}`}
               >
                 {EVENT_LABELS[event]}
               </button>
@@ -143,13 +143,13 @@ export default function Webhooks() {
                 <p className="text-xs font-mono text-gray-400 truncate mb-2">{webhook.url}</p>
                 <div className="flex flex-wrap gap-1">
                   {(webhook.events ?? []).map(event => (
-                    <span key={event} className="text-xs bg-[var(--muted-bg)] text-gray-300 px-2 py-0.5 rounded">
+                    <span key={event} className="text-xs bg-(--muted-bg) text-gray-300 px-2 py-0.5 rounded">
                       {EVENT_LABELS[event] ?? event}
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => handleTest(webhook)}
                   disabled={testing === webhook.id}

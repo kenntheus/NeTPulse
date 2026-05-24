@@ -69,7 +69,7 @@ export default function Logs() {
             <select
               value={filters.device_id}
               onChange={e => setFilters(f => ({ ...f, device_id: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-(--accent)/30"
             style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             >
               <option value="">Select device...</option>
@@ -81,7 +81,7 @@ export default function Logs() {
             <select
               value={filters.status}
               onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-(--accent)/30"
               style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             >
               <option value="">All</option>
@@ -92,14 +92,14 @@ export default function Logs() {
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">From</label>
             <input type="date" value={filters.from} onChange={e => setFilters(f => ({ ...f, from: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-(--accent)/30"
               style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">To</label>
             <input type="date" value={filters.to} onChange={e => setFilters(f => ({ ...f, to: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-(--accent)/30"
               style={{ backgroundColor: 'var(--muted-bg)', borderColor: 'var(--card-border)' }}
             />
           </div>
@@ -129,7 +129,7 @@ export default function Logs() {
                   </thead>
                   <tbody>
                     {logs.map((log) => (
-                      <tr key={log.id} className="border-t hover:bg-[var(--muted-bg)]" style={{ borderColor: 'var(--card-border)' }}>
+                      <tr key={log.id} className="border-t hover:bg-(--muted-bg)" style={{ borderColor: 'var(--card-border)' }}>
                         <td className="py-2.5 px-4 text-gray-400 text-xs">{log.id}</td>
                         <td className="py-2.5 px-4">
                           <Badge variant={log.status}>{log.status}</Badge>

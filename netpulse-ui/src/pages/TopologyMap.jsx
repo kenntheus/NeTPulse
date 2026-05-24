@@ -127,7 +127,7 @@ export default function TopologyMap() {
   const pos = layout(gateways, endpoints, size.w, size.h)
 
   return (
-    <div className="p-6 space-y-4 max-w-screen-xl mx-auto">
+    <div className="p-6 space-y-4 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Network Topology</h1>
@@ -218,7 +218,7 @@ export default function TopologyMap() {
           className="rounded-xl border p-4 flex items-start gap-4"
           style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
         >
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-2xl flex-shrink-0" style={{ backgroundColor: 'var(--muted-bg)' }}>
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: 'var(--muted-bg)' }}>
             {TYPE_ICON[selected.type]}
           </div>
           <div className="flex-1 min-w-0">
@@ -234,7 +234,7 @@ export default function TopologyMap() {
             {selected.location && <p className="text-xs text-gray-500 mt-1">📍 {selected.location}</p>}
             {selected.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{selected.description}</p>}
           </div>
-          <button onClick={() => setSelected(null)} className="text-gray-500 hover:text-white text-lg leading-none flex-shrink-0">×</button>
+          <button onClick={() => setSelected(null)} className="text-gray-500 hover:text-white text-lg leading-none shrink-0">×</button>
         </div>
       )}
     </div>

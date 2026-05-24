@@ -39,7 +39,7 @@ export default function AuditLog() {
   useEffect(() => { fetchLogs(page) }, [fetchLogs, page])
 
   return (
-    <div className="p-6 max-w-screen-lg mx-auto space-y-6">
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
       <PageHeader
         title="Audit Log"
         subtitle="A record of all significant actions in NeTPulse"

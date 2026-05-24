@@ -39,7 +39,7 @@ export default function AiInsights() {
   )
 
   return (
-    <div className="p-6 max-w-screen-xl mx-auto space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
 
       <PageHeader
         title="AI Insights"
