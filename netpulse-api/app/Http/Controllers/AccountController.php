@@ -170,15 +170,31 @@ class AccountController extends Controller
     /**
      * Format user for JSON response.
      */
+    public function updateNotifications(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'notify_on_alerts' => ['required', 'boolean'],
+        ]);
+
+        $user = $request->user();
+        $user->update($data);
+
+        return response()->json([
+            'message' => 'Notification preferences updated.',
+            'notify_on_alerts' => $user->notify_on_alerts,
+        ]);
+    }
+
     private function formatUser(User $user): array
     {
         return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'role' => $user->role,
-            'verified' => $user->isVerified(),
-            'created_at' => $user->created_at,
+            'id'               => $user->id,
+            'name'             => $user->name,
+            'email'            => $user->email,
+            'role'             => $user->role,
+            'verified'         => $user->isVerified(),
+            'notify_on_alerts' => $user->notify_on_alerts ?? true,
+            'created_at'       => $user->created_at,
         ];
     }
 }

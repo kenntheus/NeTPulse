@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/agent-token', [AccountController::class, 'agentTokenStatus']);
         Route::post('/agent-token', [AccountController::class, 'generateAgentToken']);
         Route::delete('/agent-token', [AccountController::class, 'revokeAgentToken']);
+        Route::patch('/notifications', [AccountController::class, 'updateNotifications']);
         Route::get('/2fa', [TwoFactorController::class, 'status']);
         Route::post('/2fa/setup', [TwoFactorController::class, 'setup']);
         Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm']);
