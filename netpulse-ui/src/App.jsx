@@ -15,6 +15,7 @@ import Account    from './pages/Account'
 import Webhooks    from './pages/Webhooks'
 import AuditLog    from './pages/AuditLog'
 import TopologyMap from './pages/TopologyMap'
+import Users       from './pages/Users'
 import NotFound    from './pages/NotFound'
 
 function HomeRoute() {
@@ -62,6 +63,7 @@ function AppRoutes() {
         <Route path="/webhooks"  element={<Webhooks />} />
         <Route path="/audit-log" element={<AuditLog />} />
         <Route path="/topology"  element={<TopologyMap />} />
+        <Route path="/users"     element={<Users />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

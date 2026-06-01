@@ -11,6 +11,7 @@ use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\MaintenanceWindowController;
 use App\Http\Controllers\MonitoringLogController;
 use App\Http\Controllers\TwoFactorController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -77,6 +78,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/webhooks/{webhook}/test', [WebhookController::class, 'test']);
 
     Route::get('/audit-logs', [AuditLogController::class, 'index']);
+
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/users', [UserController::class, 'index']);
+        Route::patch('/users/{user}/role', [UserController::class, 'updateRole']);
+        Route::delete('/users/{user}', [UserController::class, 'destroy']);
+    });
 
     Route::post('/arp/scan', [ArpScanController::class, 'scan']);
     Route::post('/agent/push', [ArpScanController::class, 'receivePush']);
