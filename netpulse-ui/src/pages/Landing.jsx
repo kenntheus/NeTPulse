@@ -210,6 +210,7 @@ export default function Landing() {
             <span>NeTPulse</span>
           </div>
           <div className="flex gap-5">
+            <Link to="/status"   className="hover:text-gray-300 transition-colors">Status</Link>
             <Link to="/login"    className="hover:text-gray-300 transition-colors">Sign in</Link>
             <Link to="/register" className="hover:text-gray-300 transition-colors">Register</Link>
           </div>
