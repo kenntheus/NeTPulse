@@ -8,6 +8,7 @@ use App\Models\Device;
 use App\Models\MonitoringLog;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\App;
 
 /**
  * ArpScannerService
@@ -136,12 +137,14 @@ class ArpScannerService
 
         // Only alert on genuine recovery (was offline, now online)
         if ($wasOffline) {
+            $msg = "🟢 [{$device->name}] ({$device->ip_address}) reconnected to the network.";
             Alert::create([
                 'device_id' => $device->id,
                 'type' => 'recovered',
-                'message' => "🟢 [{$device->name}] ({$device->ip_address}) reconnected to the network.",
+                'message' => $msg,
                 'created_at' => now(),
             ]);
+            App::make(NotificationService::class)->sendAlertEmail('recovered', $msg, $device->name, $device->ip_address);
             Log::info("[ARP] Device recovered: {$device->ip_address}");
         }
 
@@ -174,12 +177,14 @@ class ArpScannerService
                     'checked_at' => now(),
                 ]);
 
+                $msg = "🔴 [{$device->name}] ({$device->ip_address}) left the network.";
                 Alert::create([
                     'device_id' => $device->id,
                     'type' => 'offline',
-                    'message' => "🔴 [{$device->name}] ({$device->ip_address}) left the network.",
+                    'message' => $msg,
                     'created_at' => now(),
                 ]);
+                App::make(NotificationService::class)->sendAlertEmail('offline', $msg, $device->name, $device->ip_address);
 
                 $device->update([
                     'status' => 'offline',

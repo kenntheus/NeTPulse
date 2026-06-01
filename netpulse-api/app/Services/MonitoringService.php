@@ -23,7 +23,8 @@ class MonitoringService
 {
     public function __construct(
         private ?AnomalyDetectionService $anomaly = null,
-        private ?WebhookService $webhooks = null
+        private ?WebhookService $webhooks = null,
+        private ?NotificationService $notifications = null
     ) {}
 
     public function checkDevice(Device $device): MonitoringLog
@@ -249,6 +250,7 @@ class MonitoringService
         ]);
 
         $this->webhooks?->dispatch($event, $device);
+        $this->notifications?->sendAlertEmail($event, $message, $device->name, $device->ip_address);
         Log::info($message);
     }
 
@@ -260,14 +262,17 @@ class MonitoringService
             ->exists();
 
         if (! $recent) {
+            $message = "⚠️ High latency on [{$device->name}]: {$latencyMs}ms";
+
             Alert::create([
                 'device_id' => $device->id,
                 'type' => 'high_latency',
-                'message' => "⚠️ High latency on [{$device->name}]: {$latencyMs}ms",
+                'message' => $message,
                 'created_at' => now(),
             ]);
 
             $this->webhooks?->dispatch('high_latency', $device, ['latency_ms' => $latencyMs]);
+            $this->notifications?->sendAlertEmail('high_latency', $message, $device->name, $device->ip_address);
         }
     }
 }

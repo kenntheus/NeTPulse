@@ -14,6 +14,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name', 'email', 'password', 'role',
+        'notify_on_alerts',
         'email_verified_at',
         'two_factor_code',
         'two_factor_expires_at',
@@ -29,6 +30,7 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
+        'notify_on_alerts'  => 'boolean',
         'email_verified_at' => 'datetime',
         'two_factor_expires_at' => 'datetime',
         'two_factor_confirmed_at' => 'datetime',

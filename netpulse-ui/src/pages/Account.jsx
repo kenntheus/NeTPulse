@@ -445,6 +445,52 @@ function SetupGuide({ token }) {
   )
 }
 
+// ── Notification Preferences ─────────────────────────────────────────────────
+function NotificationPreferences({ user, onUpdated, addToast }) {
+  const [enabled,  setEnabled]  = useState(user?.notify_on_alerts ?? true)
+  const [loading,  setLoading]  = useState(false)
+
+  const handleToggle = async () => {
+    const next = !enabled
+    setEnabled(next)
+    setLoading(true)
+    try {
+      await api.patch('/account/notifications', { notify_on_alerts: next })
+      onUpdated({ ...user, notify_on_alerts: next })
+      addToast(next ? 'Email alerts enabled.' : 'Email alerts disabled.', 'success')
+    } catch {
+      setEnabled(!next)
+      addToast('Failed to update preferences.', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <p className="text-sm font-medium text-white">Email alert notifications</p>
+        <p className="text-xs text-gray-500 mt-0.5">
+          Receive an email when a device goes offline, recovers, or has high latency
+        </p>
+      </div>
+      <button
+        onClick={handleToggle}
+        disabled={loading}
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
+          enabled ? 'bg-blue-600' : 'bg-gray-600'
+        }`}
+        role="switch"
+        aria-checked={enabled}
+      >
+        <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
+          enabled ? 'translate-x-6' : 'translate-x-1'
+        }`} />
+      </button>
+    </div>
+  )
+}
+
 // ── Agent Token ───────────────────────────────────────────────────────────────
 function AgentToken({ addToast }) {
   const [hasToken, setHasToken] = useState(null)
@@ -759,6 +805,11 @@ export default function Account() {
       {/* Agent token */}
       <Section title="Agent Token" subtitle="Generate a token and follow the setup guide to monitor your local network">
         <AgentToken addToast={addToast} />
+      </Section>
+
+      {/* Notification preferences */}
+      <Section title="Notifications" subtitle="Control when NeTPulse sends you email alerts">
+        <NotificationPreferences user={currentUser} onUpdated={handleUpdated} addToast={addToast} />
       </Section>
 
       {/* Danger zone */}
