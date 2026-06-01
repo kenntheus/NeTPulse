@@ -9,6 +9,15 @@ use Illuminate\Http\Request;
 
 class MaintenanceWindowController extends Controller
 {
+    public function all(): JsonResponse
+    {
+        $windows = MaintenanceWindow::with(['device:id,name,ip_address,type', 'creator:id,name'])
+            ->orderBy('starts_at')
+            ->get();
+
+        return response()->json(['data' => $windows]);
+    }
+
     public function index(Device $device): JsonResponse
     {
         return response()->json([

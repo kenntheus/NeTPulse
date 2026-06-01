@@ -59,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/devices/{device}/uptime', [DeviceController::class, 'uptime']);
     Route::post('/devices/{device}/mute', [DeviceController::class, 'mute']);
     Route::post('/devices/{device}/unmute', [DeviceController::class, 'unmute']);
+    Route::get('/maintenance-windows', [MaintenanceWindowController::class, 'all']);
     Route::get('/devices/{device}/maintenance-windows', [MaintenanceWindowController::class, 'index']);
     Route::post('/devices/{device}/maintenance-windows', [MaintenanceWindowController::class, 'store']);
     Route::delete('/maintenance-windows/{maintenanceWindow}', [MaintenanceWindowController::class, 'destroy']);
