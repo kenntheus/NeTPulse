@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './store/AuthContext'
 import AppLayout  from './components/layout/AppLayout'
-import Landing    from './pages/Landing'
-import Login      from './pages/Login'
-import Register   from './pages/Register'
+import Landing        from './pages/Landing'
+import Login          from './pages/Login'
+import Register       from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword  from './pages/ResetPassword'
 import Setup      from './pages/Setup'
 import Dashboard  from './pages/Dashboard'
 import Devices    from './pages/Devices'
@@ -48,8 +50,10 @@ function AppRoutes() {
     <Routes>
       <Route path="/"         element={<HomeRoute />} />
       <Route path="/setup"    element={<SetupRoute><Setup /></SetupRoute>} />
-      <Route path="/login"    element={<GuestRoute><Login /></GuestRoute>} />
-      <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
+      <Route path="/login"           element={<GuestRoute><Login /></GuestRoute>} />
+      <Route path="/register"        element={<GuestRoute><Register /></GuestRoute>} />
+      <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
+      <Route path="/reset-password"  element={<ResetPassword />} />
 
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<Dashboard />} />
