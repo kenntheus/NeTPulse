@@ -20,6 +20,7 @@ import AuditLog           from './pages/AuditLog'
 import TopologyMap        from './pages/TopologyMap'
 import Users              from './pages/Users'
 import MaintenanceWindows from './pages/MaintenanceWindows'
+import EscalationRules    from './pages/EscalationRules'
 import NotFound           from './pages/NotFound'
 
 function HomeRoute() {
@@ -72,6 +73,7 @@ function AppRoutes() {
         <Route path="/topology"    element={<TopologyMap />} />
         <Route path="/users"       element={<Users />} />
         <Route path="/maintenance" element={<MaintenanceWindows />} />
+        <Route path="/escalation"  element={<EscalationRules />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

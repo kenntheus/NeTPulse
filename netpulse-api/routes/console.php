@@ -3,6 +3,7 @@
 use App\Services\AI\AlertGroupingService;
 use App\Services\AI\AnomalyDetectionService;
 use App\Services\ArpScannerService;
+use App\Services\EscalationService;
 use App\Services\MonitoringService;
 use Illuminate\Support\Facades\Schedule;
 
@@ -25,3 +26,8 @@ Schedule::call(function () {
 Schedule::call(function () {
     app(AlertGroupingService::class)->detectCascade();
 })->everyMinute()->name('alert-grouping')->withoutOverlapping();
+
+// Escalation rules every minute — fire webhooks for unacknowledged alerts
+Schedule::call(function () {
+    app(EscalationService::class)->run();
+})->everyMinute()->name('escalation-rules')->withoutOverlapping();

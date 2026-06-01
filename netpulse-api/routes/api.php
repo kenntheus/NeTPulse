@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\EscalationRuleController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\AlertController;
@@ -84,6 +85,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::apiResource('webhooks', WebhookController::class)->except(['show']);
     Route::post('/webhooks/{webhook}/test', [WebhookController::class, 'test']);
+
+    Route::apiResource('escalation-rules', EscalationRuleController::class)->except(['show']);
 
     Route::get('/audit-logs', [AuditLogController::class, 'index']);
 
