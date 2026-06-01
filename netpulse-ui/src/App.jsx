@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './store/AuthContext'
 import AppLayout  from './components/layout/AppLayout'
+import Landing    from './pages/Landing'
 import Login      from './pages/Login'
 import Register   from './pages/Register'
 import Setup      from './pages/Setup'
@@ -16,6 +17,14 @@ import AuditLog    from './pages/AuditLog'
 import TopologyMap from './pages/TopologyMap'
 import NotFound    from './pages/NotFound'
 
+function HomeRoute() {
+  const { user, needsSetup } = useAuth()
+  if (needsSetup === null) return null
+  if (needsSetup) return <Navigate to="/setup" replace />
+  if (user) return <Navigate to="/dashboard" replace />
+  return <Landing />
+}
+
 function ProtectedRoute({ children }) {
   const { user, needsSetup } = useAuth()
   if (needsSetup) return <Navigate to="/setup" replace />
@@ -25,7 +34,7 @@ function ProtectedRoute({ children }) {
 function GuestRoute({ children }) {
   const { user, needsSetup } = useAuth()
   if (needsSetup) return <Navigate to="/setup" replace />
-  return !user ? children : <Navigate to="/" replace />
+  return !user ? children : <Navigate to="/dashboard" replace />
 }
 
 function SetupRoute({ children }) {
@@ -37,13 +46,14 @@ function SetupRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/"         element={<HomeRoute />} />
       <Route path="/setup"    element={<SetupRoute><Setup /></SetupRoute>} />
       <Route path="/login"    element={<GuestRoute><Login /></GuestRoute>} />
       <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-        <Route path="/"        element={<Dashboard />} />
-        <Route path="/devices" element={<Devices />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/devices"   element={<Devices />} />
         <Route path="/logs"    element={<Logs />} />
         <Route path="/alerts"  element={<Alerts />} />
         <Route path="/ai"      element={<AiInsights />} />
