@@ -14,11 +14,12 @@ import Alerts     from './pages/Alerts'
 import AiInsights from './pages/AIInsights'
 import AiChat     from './pages/AiChat'
 import Account    from './pages/Account'
-import Webhooks    from './pages/Webhooks'
-import AuditLog    from './pages/AuditLog'
-import TopologyMap from './pages/TopologyMap'
-import Users       from './pages/Users'
-import NotFound    from './pages/NotFound'
+import Webhooks           from './pages/Webhooks'
+import AuditLog           from './pages/AuditLog'
+import TopologyMap        from './pages/TopologyMap'
+import Users              from './pages/Users'
+import MaintenanceWindows from './pages/MaintenanceWindows'
+import NotFound           from './pages/NotFound'
 
 function HomeRoute() {
   const { user, needsSetup } = useAuth()
@@ -64,10 +65,11 @@ function AppRoutes() {
         <Route path="/ai"      element={<AiInsights />} />
         <Route path="/ai/chat" element={<AiChat />} />
         <Route path="/account"  element={<Account />} />
-        <Route path="/webhooks"  element={<Webhooks />} />
-        <Route path="/audit-log" element={<AuditLog />} />
-        <Route path="/topology"  element={<TopologyMap />} />
-        <Route path="/users"     element={<Users />} />
+        <Route path="/webhooks"    element={<Webhooks />} />
+        <Route path="/audit-log"   element={<AuditLog />} />
+        <Route path="/topology"    element={<TopologyMap />} />
+        <Route path="/users"       element={<Users />} />
+        <Route path="/maintenance" element={<MaintenanceWindows />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
