@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './store/AuthContext'
 import AppLayout  from './components/layout/AppLayout'
 import Landing        from './pages/Landing'
+import StatusPage     from './pages/StatusPage'
 import Login          from './pages/Login'
 import Register       from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
@@ -51,6 +52,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/"         element={<HomeRoute />} />
+      <Route path="/status"   element={<StatusPage />} />
       <Route path="/setup"    element={<SetupRoute><Setup /></SetupRoute>} />
       <Route path="/login"           element={<GuestRoute><Login /></GuestRoute>} />
       <Route path="/register"        element={<GuestRoute><Register /></GuestRoute>} />

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\StatusController;
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\ArpScanController;
@@ -14,6 +15,9 @@ use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
+
+// ── Public routes ─────────────────────────────────────────────────────────────
+Route::get('/status', [StatusController::class, 'index'])->middleware('throttle:30,1');
 
 // ── Public auth routes ────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
